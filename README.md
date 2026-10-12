@@ -53,11 +53,12 @@ of an innings.)
 | `?layout=classic` | laid out like a traditional ground scoreboard, with the umpire light beside the title |
 | `?layout=classicboard` | full-board tiles, arranged like the ground scoreboard, with the umpire light beside the title |
 | `&title=Home%20CC` | text in the title cell (hidden if not set) |
-| `&scale=1.3` | bigger or smaller |
+| `&scale=0.6` | board layouts fill the window (or OBS browser source) and re-fit when it's resized; `&scale` makes them a fraction of that. On the score bar it's a plain zoom |
+| `&fit=0` | board layouts: keep their natural size (with `&scale` as a zoom) instead of filling the window. They still shrink if they wouldn't fit |
 | `&pos=top` | score bar at the top of the screen |
 | `&bg=1` | solid background (handy for previewing in a browser) |
 
-Example: `http://127.0.0.1:8765/?layout=classicboard&title=Home%20CC&scale=1.2`
+Example: `http://127.0.0.1:8765/?layout=classicboard&title=Home%20CC&scale=0.9`
 
 ## Receiver options
 

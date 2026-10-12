@@ -11,7 +11,10 @@
     ?layout=classic          laid out like a traditional ground scoreboard
     ?layout=classicboard     full-board tile style, arranged like the ground scoreboard
     &title=Home%20CC         text shown in the title cell
-    &scale=1.2               make everything bigger/smaller
+    &scale=0.6               board layouts: size as a fraction of the window (default 1 = fill it)
+                             bar: make it bigger/smaller
+    &fit=0                   board layouts: natural size with &scale as a plain zoom, only
+                             shrinking if it wouldn't fit the window
     &pos=top                 bar at the top instead of the bottom
     &bg=1                    solid background (handy for checking in a normal browser)
 -->
@@ -243,7 +246,30 @@
   document.body.classList.add("layout-" + layout);
   if (q.get("pos") === "top") document.body.classList.add("top");
   if (q.get("bg")) document.body.classList.add("solid");
-  if (q.get("scale")) document.documentElement.style.setProperty("--scale", q.get("scale"));
+  // Size: the board layouts scale to fit the window (or OBS browser source), keeping their shape,
+  // and re-fit whenever it's resized. &scale is then a fraction of the window. The bar keeps
+  // &scale as a zoom but shrinks if it would be wider than the window.
+  const userScale = parseFloat(q.get("scale")) > 0 ? parseFloat(q.get("scale")) : 1;
+  const fitMode = q.get("fit") !== "0";
+  const panelId = { board: "board", classic: "classic", classicboard: "cboard" }[layout];
+  function fit() {
+    const W = window.innerWidth, H = window.innerHeight;
+    const el = document.getElementById(panelId || "bar");
+    if (!el || !W || !H) return;
+    const w = el.offsetWidth, h = el.offsetHeight;      // natural size (transforms don't affect these)
+    if (!w || !h) return;
+    let sc;
+    if (panelId && fitMode) {
+      sc = Math.min(W * 0.96 / w, H * 0.96 / h) * Math.min(userScale, 1);
+    } else {
+      sc = Math.min(userScale, (W * 0.96) / w);
+      if (panelId) sc = Math.min(sc, (H * 0.96) / h);
+    }
+    document.documentElement.style.setProperty("--scale", sc.toFixed(4));
+  }
+  window.addEventListener("resize", fit);
+  fit();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
   const defTitle = "";
   document.querySelectorAll('[data-text="title"]').forEach(el => el.textContent = q.has("title") ? q.get("title") : defTitle);
   // with no title, the umpire light sits alone in the centre of the header
@@ -278,6 +304,7 @@
       el.classList.toggle("hidden", !(values[el.dataset.show] || "").trim());
     });
     last = Object.assign({}, values);
+    fit();
   }
 
   function poll() {

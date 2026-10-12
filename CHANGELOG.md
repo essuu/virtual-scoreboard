@@ -21,6 +21,9 @@ First public release.
 - Umpire light (field 0) shown as a circle to the right of the title on the classic and
   classicboard layouts, lit in the number colour while the light key is held (centred in the
   header if there's no title).
+- The board, classic and classicboard layouts scale to fit the window or OBS browser source and
+  re-fit on resize, so nothing is cut off. `&scale` is now a fraction of the window for these;
+  `&fit=0` restores the fixed size. The score bar shrinks if it's wider than the window.
 - `record_test.bat`: run the receiver and save the radio signal to a timestamped recording.
 - Fix: replaying a `.sr` capture could split a burst in two and log a message twice.
 - `--version` option, tests, and CI on Windows and Linux.
