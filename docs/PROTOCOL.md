@@ -70,7 +70,7 @@ and the console's Category key uses the same numbers. PCS Pro lists 14 as `DlsPa
 
 | ID | Field | Notes |
 |---|---|---|
-| 0 | Umpire light (`UmpireLight`) | received live; on/off values to be documented |
+| 0 | Umpire light (`UmpireLight`) | `1` while the light key is held, `0` (a real zero, not blank) when released. Sent at once, without the usual delay |
 | 1 | Left-hand batter number | blanked when the batter is out |
 | 2 | Right-hand batter number | |
 | 3 | Left-hand batter runs | |
@@ -93,11 +93,12 @@ and the console's Category key uses the same numbers. PCS Pro lists 14 as `DlsPa
   the total, about 0.9 s apart.
 - Values are **absolute**, not increments. The controller waits briefly after key presses and sends
   only the latest value, so quick presses are batched together.
+- **The umpire light is the exception:** it is sent straight away, `1` on press and `0` on release,
+  so it can signal in real time. Each burst still lasts about 0.41 s (preamble plus 10 frames).
 - **End of innings** sends every field 1–14 in order, about 0.9 s apart. Fields 1–10 are blank,
   11 and 12 are set.
 
 ## Still to confirm
 
-- The umpire light's (field 0) on/off values still need writing down.
 - Whether the end-of-innings refresh also sends field 15 (the one capture of it stops during 14).
 - In one capture, a total entered as 994 was sent as 996.
