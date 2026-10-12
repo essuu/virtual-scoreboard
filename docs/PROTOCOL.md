@@ -35,7 +35,8 @@ gap:   a short low gap before the next frame
 ```
 
 A receiver should take a majority vote across the copies. This one accepts a message when
-at least two frames agree.
+at least two frames agree. It updates the scoreboard as soon as the first two matching copies are
+in (about 0.1 s into the 0.41 s burst), then confirms the value against the whole burst.
 
 ## Frame payload
 

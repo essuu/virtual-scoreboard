@@ -16,6 +16,10 @@ First public release.
   dropped. The status page and console now show each message's field number.
 - Fields 14 and 15 are bowler 1 and bowler 2 numbers on the ECS console (confirmed live). PCS Pro's
   DLS par isn't used.
+- Faster updates: a message is shown as soon as two matching copies arrive (about 0.1 s after the
+  burst starts instead of about 0.43 s), then confirmed when the burst ends.
+- Umpire light (field 0) shown as a round cluster of LEDs beside the last man's score on the
+  classic and classicboard layouts, lit while the light key is held.
 - `record_test.bat`: run the receiver and save the radio signal to a timestamped recording.
 - Fix: replaying a `.sr` capture could split a burst in two and log a message twice.
 - `--version` option, tests, and CI on Windows and Linux.

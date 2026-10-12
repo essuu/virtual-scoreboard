@@ -75,6 +75,14 @@ class Scoreboard:
         print("%s  %2d %-32s = %-4s (%d/10 copies)%s%s" % (
             time.strftime("%H:%M:%S"), field, proto.field_label(field), value if value else "(blank)",
             copies, lvl, "" if changed else "  [repeat]"), flush=True)
+        return entry
+
+    def confirm(self, entry, copies):
+        """A value applied early (from the first copies of a burst) is confirmed by the whole
+        burst: record the final copy count without logging the message again."""
+        with self.lock:
+            self.stats["frames_ok"] += max(0, copies - entry["copies"])
+            entry["copies"] = copies
 
     def reset(self):
         with self.lock:
@@ -121,6 +129,10 @@ class RadioDecoder:
         self.burst_iq = []
         self.burst_spec = []
         self.burst_excess = []
+        self.burst_early = None    # (field, value, log entry) applied before the burst ended
+        self.burst_t0 = 0          # block count at burst start (1 block = NFFT samples)
+        self.blocks = 0
+        self.last_early_ms = None  # burst start -> early update, for tests and the status page
         # demod chain
         self.dec1 = max(1, int(round(fs / 256000)))
         self.fs1 = fs / self.dec1
@@ -170,6 +182,7 @@ class RadioDecoder:
             self._block(blocks[k], spec[k], band[k])
 
     def _block(self, blk, spec, band):
+        self.blocks += 1
         if self.noise is None or self.noise_n < 50:
             # learn the noise floor during the first 50 ms
             self.noise = band.copy() if self.noise is None else self.noise * 0.9 + band * 0.1
@@ -182,6 +195,8 @@ class RadioDecoder:
             if not self.in_burst:
                 self.in_burst = True
                 self.burst_iq, self.burst_spec, self.burst_excess = [], [], []
+                self.burst_early = None
+                self.burst_t0 = self.blocks
             self.quiet = 0
         elif self.in_burst:
             self.quiet += 1
@@ -190,6 +205,12 @@ class RadioDecoder:
             if active:
                 self.burst_spec.append(spec)
                 self.burst_excess.append(excess_db)
+            # Early update: the controller sends each message 10 times (~0.41 s), but 2 matching
+            # copies are enough, and they are in after ~0.1 s. Try every ~10 ms from 60 ms on
+            # until something decodes, so the scoreboard (and the umpire light) updates sooner.
+            n = len(self.burst_spec)
+            if active and self.burst_early is None and n >= 60 and n % 10 == 0:
+                self._try_early()
             if self.quiet >= 15:
                 self.in_burst = False
                 self._decode_burst()
@@ -197,12 +218,32 @@ class RadioDecoder:
             self.noise = self.noise * 0.995 + band * 0.005
         BOARD.stats["noise_db"] = round(float(10 * np.log10(np.median(self.noise) + 1e-20)), 1)
 
+    def _try_early(self):
+        snr = float(np.median(self.burst_excess))
+        best = self._demod()
+        if len(best) == 1:
+            field, value, copies = best[0]
+            entry = BOARD.apply(field, value, copies, level_db=round(snr, 1))
+            self.burst_early = (field, value, entry)
+            self.last_early_ms = (self.blocks - self.burst_t0 + 1) * self.NFFT * 1000.0 / self.fs
+            BOARD.stats["early_ms"] = round(self.last_early_ms)
+
     def _decode_burst(self):
         if len(self.burst_spec) < 50:            # shorter than 50 ms: not ours
             return
         BOARD.stats["bursts"] += 1
         snr = float(np.median(self.burst_excess))
         BOARD.stats["last_level_db"] = round(snr, 1)
+        best = self._demod()
+        early = self.burst_early
+        for field, value, copies in best:
+            if early and (field, value) == early[:2]:
+                BOARD.confirm(early[2], copies)
+            else:
+                BOARD.apply(field, value, copies, level_db=round(snr, 1))
+
+    def _demod(self):
+        """Demodulate the burst so far. Returns [(field, value, copies)]."""
         # carrier = power-weighted centroid of the excess spectrum near the peak
         mean_spec = np.mean(self.burst_spec, axis=0)
         excess = np.clip(mean_spec - self.noise, 0, None)
@@ -226,8 +267,7 @@ class RadioDecoder:
             r = proto.decode_levels(lv, self.fs2)
             if len(r) > len(best):
                 best = r
-        for field, value, copies in best:
-            BOARD.apply(field, value, copies, level_db=round(snr, 1))
+        return best
 
 
 def run_rtl(args):

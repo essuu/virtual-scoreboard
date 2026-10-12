@@ -39,6 +39,9 @@ def test_fm_decode(freq_error):
         dec.feed(iq[i:i + chunk])
     got = [(e["field"], e["value"]) for e in ecs_receiver.BOARD.log]
     assert got == [(5, "55")]
+    # applied early, from the first copies, then confirmed by the whole burst
+    assert dec.last_early_ms is not None and dec.last_early_ms < 150
+    assert ecs_receiver.BOARD.log[0]["copies"] >= 9
 
 
 def test_noise_only_gives_no_messages():
