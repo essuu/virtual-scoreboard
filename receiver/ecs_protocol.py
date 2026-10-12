@@ -22,8 +22,17 @@ FIELD_LABELS = {
     0: "Umpire light", 1: "LH batter no.", 2: "RH batter no.", 3: "LH batter runs", 4: "RH batter runs",
     5: "Total", 6: "Wickets", 7: "Overs", 8: "Extras", 9: "Last batter",
     10: "Total at last wkt", 11: "1st innings total", 12: "Runs required", 13: "Overs remaining",
-    14: "DLS par score",
+    14: "Field 14 (bowler no.? / DLS par)",
 }
+
+
+def field_name(field):
+    """State key for a field ID; IDs not in FIELDS (e.g. 15) get 'field_N'."""
+    return FIELDS.get(field, "field_%d" % field)
+
+
+def field_label(field):
+    return FIELD_LABELS.get(field, "Field %d (unknown)" % field)
 
 
 def decode_frame(bits):
@@ -36,9 +45,7 @@ def decode_frame(bits):
         if n < 3 and g[7] != "0":
             return None
     digits = [int(g[3:7], 2) for g in groups]
-    field = digits[0]
-    if field not in FIELDS:
-        return None
+    field = digits[0]          # 4-bit, so 0-15; unknown IDs are kept so new fields can be found
     out = ""
     for d in digits[1:]:
         if d == 15:

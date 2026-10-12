@@ -33,7 +33,8 @@ class Scoreboard:
         try:
             with open(STATE_FILE) as f:
                 saved = json.load(f)
-            self.values.update({k: v for k, v in saved.get("values", {}).items() if k in self.values})
+            self.values.update({k: v for k, v in saved.get("values", {}).items()
+                                if k in self.values or k.startswith("field_")})
             self.updated = saved.get("updated", 0.0)
         except Exception:
             pass
@@ -52,14 +53,14 @@ class Scoreboard:
             return {"values": dict(self.values), "updated": self.updated}
 
     def apply(self, field, value, copies, level_db=None):
-        name = proto.FIELDS[field]
+        name = proto.field_name(field)
         now = time.time()
         with self.lock:
             changed = self.values.get(name) != value
             self.values[name] = value
             self.updated = now
             self.stats["frames_ok"] += copies
-            entry = {"t": now, "field": field, "label": proto.FIELD_LABELS[field],
+            entry = {"t": now, "field": field, "label": proto.field_label(field),
                      "value": value, "copies": copies, "level_db": level_db}
             self.log.append(entry)
             self.log = self.log[-200:]
@@ -71,8 +72,8 @@ class Scoreboard:
                 except queue.Full:
                     pass
         lvl = "" if level_db is None else "  level %.0f dB" % level_db
-        print("%s  %-18s = %-4s (%d/10 copies)%s%s" % (
-            time.strftime("%H:%M:%S"), proto.FIELD_LABELS[field], value if value else "(blank)",
+        print("%s  %2d %-32s = %-4s (%d/10 copies)%s%s" % (
+            time.strftime("%H:%M:%S"), field, proto.field_label(field), value if value else "(blank)",
             copies, lvl, "" if changed else "  [repeat]"), flush=True)
 
     def reset(self):

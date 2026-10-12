@@ -48,7 +48,7 @@ at least two frames agree.
 
 | Group index | Digit meaning |
 |---|---|
-| 3 | field ID (0–14) |
+| 3 | field ID (0–15 possible; 0–14 seen so far) |
 | 2 | hundreds |
 | 1 | tens |
 | 0 | units |
@@ -83,7 +83,7 @@ and the console's Category key uses the same numbers.
 | 11 | First-innings total | set at the end of the innings |
 | 12 | Runs required to win (`RunsRequiredToWin`) | first-innings total + 1 at the end of the 1st innings; counts down in the 2nd |
 | 13 | Overs remaining (`OversRemaining`) | blank in the 1st innings |
-| 14 | DLS par score (`DlsParScore`) | the ECS console has no DLS par category, so this is never set; it only appears (blank) in the end-of-innings refresh |
+| 14 | DLS par score (`DlsParScore`) in PCS Pro | the ECS console has no DLS par category, but **setting bowler 1's number changes field 14**, so on this console it may be a bowler number. Under test |
 
 ## Behaviour
 
@@ -96,6 +96,8 @@ and the console's Category key uses the same numbers.
 
 ## Still to confirm
 
-- Field 0 (umpire light) hasn't been captured yet; it probably comes from the console's light key.
+- Field 0 (umpire light) is received live; its on/off values still need writing down.
+- Field 14 vs the bowler numbers, and whether bowler 2 (or anything else) uses field 15. The receiver
+  keeps unknown field IDs and shows them as "Field N (unknown)" on the status page.
 - The digit 8 hasn't been seen in a capture yet.
 - In one capture, a total entered as 994 was sent as 996.

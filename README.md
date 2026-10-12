@@ -88,6 +88,13 @@ Run `python ecs_receiver.py --help` for the full list.
 | `/events` | server-sent events stream of every update |
 | `POST /reset` | clears all values |
 
+## Recording a test session
+
+`receiver\record_test.bat` runs the receiver as usual, opens the status page, and also saves the raw
+radio signal to `receiver\recordings\test_<date>_<time>.cu8` (about 2 MB a second). The status page
+shows every message with its field number, including field numbers the receiver doesn't know yet.
+To decode a recording again later: `python ecs_receiver.py --iq recordings\test_….cu8 --no-server`.
+
 ## Testing without the radio
 
 `receiver\test_replay.bat` replays one of the logic-analyser recordings in `captures/` in real time

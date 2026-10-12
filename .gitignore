@@ -1,6 +1,7 @@
 # Runtime state and recordings
 receiver/state.json
 receiver/state.json.tmp
+receiver/recordings/
 *.cu8
 *.complex16s
 

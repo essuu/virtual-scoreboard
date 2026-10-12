@@ -56,7 +56,7 @@ async function tick(){
     document.getElementById("cfo").textContent = st.carrier_offset_khz==null ? "–" : st.carrier_offset_khz.toFixed(1)+" kHz";
     const lg = d.log; document.getElementById("age").textContent = lg.length ? fmtAge(d.now - lg[lg.length-1].t) : "none yet";
     document.getElementById("log").innerHTML = lg.slice().reverse().map(e =>
-      `<tr><td>${new Date(e.t*1000).toLocaleTimeString()}</td><td>${e.label}</td><td>${e.value||"(blank)"}</td><td>${e.copies}/10</td><td>${e.level_db==null?"–":e.level_db.toFixed(0)+" dB"}</td></tr>`).join("");
+      `<tr><td>${new Date(e.t*1000).toLocaleTimeString()}</td><td>${e.field}: ${e.label}</td><td>${e.value||"(blank)"}</td><td>${e.copies}/10</td><td>${e.level_db==null?"–":e.level_db.toFixed(0)+" dB"}</td></tr>`).join("");
   }catch(e){ document.getElementById("src").textContent = "receiver not responding"; }
 }
 document.getElementById("reset").onclick = async () => { if (confirm("Clear every value on the virtual scoreboard?")) await fetch("/reset",{method:"POST"}); };

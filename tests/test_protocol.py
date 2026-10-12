@@ -36,8 +36,10 @@ def test_decodes_umpire_light_field_0():
     assert proto.decode_frame(frame_bits(0, (15, 15, 1))) == (0, "1")
 
 
-def test_rejects_unknown_field():
-    assert proto.decode_frame(frame_bits(15, (15, 15, 1))) is None
+def test_keeps_unknown_field_15():
+    assert proto.decode_frame(frame_bits(15, (15, 15, 1))) == (15, "1")
+    assert proto.field_name(15) == "field_15"
+    assert "15" in proto.field_label(15)
 
 
 def test_rejects_non_bcd_digit():
