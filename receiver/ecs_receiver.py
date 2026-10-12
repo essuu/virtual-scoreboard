@@ -12,9 +12,12 @@ from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 import numpy as np
 
 import ecs_protocol as proto
+from director import Director
+from obs_ws import OBSClient
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 STATE_FILE = os.path.join(HERE, "state.json")
+MATCH_FILE = os.path.join(HERE, "match.json")      # batting side, bowling end, auto on/off
 
 
 # ----------------------------------------------------------------------------- state
@@ -48,15 +51,30 @@ class Scoreboard:
         except Exception as e:
             print("warning: could not save state:", e)
 
+    def _snap(self):
+        # call with self.lock held
+        return {"values": dict(self.values), "updated": self.updated, "match": DIRECTOR.match_info()}
+
     def snapshot(self):
         with self.lock:
-            return {"values": dict(self.values), "updated": self.updated}
+            return self._snap()
+
+    def broadcast(self):
+        """Push the current state to every open scoreboard (e.g. after the match settings change)."""
+        with self.lock:
+            snap = self._snap()
+            for q in list(self.listeners):
+                try:
+                    q.put_nowait(snap)
+                except queue.Full:
+                    pass
 
     def apply(self, field, value, copies, level_db=None):
         name = proto.field_name(field)
         now = time.time()
         with self.lock:
-            changed = self.values.get(name) != value
+            old = self.values.get(name)
+            changed = old != value
             self.values[name] = value
             self.updated = now
             self.stats["frames_ok"] += copies
@@ -65,7 +83,7 @@ class Scoreboard:
             self.log.append(entry)
             self.log = self.log[-200:]
             self._save()
-            snap = {"values": dict(self.values), "updated": self.updated}
+            snap = self._snap()
             for q in list(self.listeners):
                 try:
                     q.put_nowait(snap)
@@ -75,6 +93,8 @@ class Scoreboard:
         print("%s  %2d %-32s = %-4s (%d/10 copies)%s%s" % (
             time.strftime("%H:%M:%S"), field, proto.field_label(field), value if value else "(blank)",
             copies, lvl, "" if changed else "  [repeat]"), flush=True)
+        if changed:
+            DIRECTOR.notify(name, old, value)       # outside our lock: it may talk to OBS
         return entry
 
     def confirm(self, entry, copies):
@@ -85,17 +105,20 @@ class Scoreboard:
             entry["copies"] = copies
 
     def reset(self):
+        """Clear every value and the match settings (batting side, bowling end) for a new match."""
         with self.lock:
             for k in self.values:
                 self.values[k] = ""
             self.updated = time.time()
             self._save()
-            snap = {"values": dict(self.values), "updated": self.updated}
-            for q in list(self.listeners):
-                q.put_nowait(snap)
+        DIRECTOR.sync(self.values)
+        DIRECTOR.reset_match()          # also broadcasts the cleared board
 
 
+DIRECTOR = Director(state_file=MATCH_FILE)
 BOARD = Scoreboard()
+DIRECTOR.sync(BOARD.values)
+DIRECTOR.on_change = lambda: BOARD.broadcast()
 
 
 # ----------------------------------------------------------------------------- radio DSP
@@ -361,8 +384,48 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(b)
 
+    def _api(self):
+        """Match controls for the Stream Deck ("Website" action with "GET request in background")
+        and the status page. GET and POST both work."""
+        from urllib.parse import urlsplit, parse_qs
+        u = urlsplit(self.path)
+        q = {k: v[-1] for k, v in parse_qs(u.query).items()}
+        cmd = u.path[len("/api/"):].strip("/")
+        try:
+            if cmd in ("", "director", "status"):
+                pass
+            elif cmd == "bowling":
+                DIRECTOR.set_bowling(q.get("end", "").lower())
+            elif cmd in ("left", "right"):                       # short forms: /api/left, /api/right
+                DIRECTOR.set_bowling(cmd)
+            elif cmd == "swap":
+                DIRECTOR.swap_ends()
+            elif cmd == "batting-first":
+                t = q.get("team", "").lower()
+                DIRECTOR.set_batting_first("" if t in ("", "none", "clear") else t)
+            elif cmd in ("home-first", "away-first"):
+                DIRECTOR.set_batting_first(cmd.split("-")[0])
+            elif cmd == "auto":
+                v = q.get("on", "toggle").lower()
+                DIRECTOR.set_auto("toggle" if v == "toggle" else v in ("1", "on", "true", "yes"))
+            elif cmd == "live":
+                DIRECTOR.go_live()
+            elif cmd == "scene":
+                DIRECTOR.cut_to(q.get("name", ""))
+            elif cmd == "board":
+                hold = q.get("hold", "") in ("1", "true", "yes")
+                secs = float(q["seconds"]) if q.get("seconds") else None
+                DIRECTOR.show_board(secs, hold=hold)
+            else:
+                return self._send(404, json.dumps({"error": "unknown command " + cmd}), "application/json")
+        except (ValueError, KeyError) as e:
+            return self._send(400, json.dumps({"error": str(e)}), "application/json")
+        return self._send(200, json.dumps(DIRECTOR.status()), "application/json")
+
     def do_GET(self):
         path = self.path.split("?")[0]
+        if path == "/api" or path.startswith("/api/"):
+            return self._api()
         if path in ("/", "/scoreboard", "/index.html"):
             with open(os.path.join(HERE, "scoreboard.html"), "rb") as f:
                 return self._send(200, f.read(), "text/html; charset=utf-8")
@@ -403,6 +466,8 @@ class Handler(BaseHTTPRequestHandler):
         self._send(404, "not found", "text/plain")
 
     def do_POST(self):
+        if self.path == "/api" or self.path.startswith("/api/"):
+            return self._api()
         if self.path == "/reset":
             BOARD.reset()
             return self._send(200, "ok", "text/plain")
@@ -428,10 +493,28 @@ def main():
     ap.add_argument("--realtime", action="store_true", help="replay files at real speed")
     ap.add_argument("--lan", action="store_true", help="let other computers on the network open the pages")
     ap.add_argument("--no-server", action="store_true", help="decode only, no web server")
+    g = ap.add_argument_group("OBS control (automatic camera ends and full board on a wicket)")
+    g.add_argument("--no-obs", action="store_true", help="don't connect to OBS")
+    g.add_argument("--obs-host", default="127.0.0.1", help="OBS WebSocket host (default 127.0.0.1)")
+    g.add_argument("--obs-port", type=int, default=4455, help="OBS WebSocket port (default 4455)")
+    g.add_argument("--obs-password", default=os.environ.get("OBS_PASSWORD", ""),
+                   help="OBS WebSocket password (or set OBS_PASSWORD)")
+    g.add_argument("--scene-left", default="Camera Left", help='scene for the left-end camera (default "Camera Left")')
+    g.add_argument("--scene-right", default="Camera Right", help='scene for the right-end camera (default "Camera Right")')
+    g.add_argument("--scene-board", default="Full Board", help='full-scoreboard scene (default "Full Board")')
+    g.add_argument("--board-seconds", type=float, default=10, help="how long the board stays up after a wicket (default 10)")
     args = ap.parse_args()
     if args.rtl_sdr is None:
         local = os.path.join(HERE, "rtl_sdr.exe")
         args.rtl_sdr = local if os.path.exists(local) else "rtl_sdr"
+
+    DIRECTOR.scenes.update({"left": args.scene_left, "right": args.scene_right, "board": args.scene_board})
+    DIRECTOR.board_seconds = args.board_seconds
+    if not args.no_obs:
+        DIRECTOR.obs = OBSClient(args.obs_host, args.obs_port, args.obs_password,
+                                 on_event=DIRECTOR.on_obs_event, on_connect=DIRECTOR.on_obs_connect,
+                                 log=lambda m: print(time.strftime("%H:%M:%S"), " ", m, flush=True)).start()
+    DIRECTOR.start()
 
     if not args.no_server:
         class Server(ThreadingHTTPServer):

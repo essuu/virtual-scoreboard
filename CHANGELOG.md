@@ -27,3 +27,11 @@ First public release.
 - `record_test.bat`: run the receiver and save the radio signal to a timestamped recording.
 - Fix: replaying a `.sr` capture could split a burst in two and log a message twice.
 - `--version` option, tests, and CI on Windows and Linux.
+- Automatic OBS cameras: cuts to the camera at the bowling end each over, shows the full board for
+  10 s after a wicket and holds it at the end of an innings. Uses OBS's built-in WebSocket server
+  (no extra Python packages). Leaves break scenes alone until "Back to play".
+- Match controls for a Stream Deck or the status page: which end is bowling now, swap ends, who
+  batted first, auto on/off, board, back to play, any scene. Stream Deck Mini layout and key
+  images in `streamdeck/`.
+- Batting side ("Home batting" / "Away batting", or names with `&home=` / `&away=`) on every
+  layout, swapped automatically for the second innings.

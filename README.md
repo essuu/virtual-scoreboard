@@ -44,6 +44,44 @@ The receiver remembers the last values if it is restarted. To start a new match,
 **Clear scoreboard** button on the status page. (The controller also blanks most fields at the end
 of an innings.)
 
+## Automatic cameras in OBS
+
+With a camera on each sightscreen, the receiver can drive OBS like PCS Pro does for NV Play:
+
+- **Each over**, it cuts to the camera at the new bowling end (behind the bowler).
+- **At a wicket**, it shows the full-board scene for 10 seconds, then cuts back to the bowling-end
+  camera (the new end, if the over finished on that ball).
+- **At the end of an innings**, it shows the board and holds it until you say which end is
+  bowling the first over of the next innings.
+- If you've picked any other scene (a break, a holding screen), it leaves it alone until you press
+  **Back to play**. A manual cut to the other camera stays until the next over.
+
+The ends come from the completed-overs count, so the receiver needs to be told once per innings
+which end bowled first: press **Left end** or **Right end** on the Stream Deck or the status page
+as the over starts. Pressing it at any later point also corrects the ends.
+
+### OBS set-up
+
+1. Create three scenes named exactly **Camera Left**, **Camera Right** and **Full Board**
+   ("left" and "right" as seen from the scorebox). Add the scoreboard Browser Source to each camera
+   scene, and `?layout=classicboard` to Full Board. Other names can be used with
+   `--scene-left`, `--scene-right` and `--scene-board`.
+2. *Tools > WebSocket Server Settings*: tick **Enable WebSocket server** (port 4455). Either untick
+   *Enable Authentication* (fine on a PC that isn't shared) or copy the password into
+   `start_receiver.bat`: `python ecs_receiver.py --obs-password YOURPASSWORD`.
+3. Start the receiver. The status page shows *OBS connected*, or what's wrong, and warns if a
+   scene name doesn't exist. The scene change uses OBS's current transition, so a 300 ms fade or a
+   cut works as set in OBS.
+
+The status page has buttons for every control, and [`streamdeck/`](streamdeck/README.md) has a
+ready-made Stream Deck Mini layout with key images.
+
+### Batting side
+
+Tell the receiver who batted first (**Home** or **Away**). The scoreboard then shows
+"Home batting" or "Away batting", and swaps it when the controller signals the end of the first
+innings. Add `&home=Tenterden&away=Visitors` to the OBS URL to show names instead.
+
 ## Scoreboard layouts (add to the OBS URL)
 
 | Option | Effect |
@@ -53,6 +91,7 @@ of an innings.)
 | `?layout=classic` | laid out like a traditional ground scoreboard, with the umpire light beside the title |
 | `?layout=classicboard` | full-board tiles, arranged like the ground scoreboard, with the umpire light beside the title |
 | `&title=Home%20CC` | text in the title cell (hidden if not set) |
+| `&home=Tenterden&away=Visitors` | names shown for the batting side (default Home / Away) |
 | `&scale=0.6` | board layouts fill the window (or OBS browser source) and re-fit when it's resized; `&scale` makes them a fraction of that. On the score bar it's a plain zoom |
 | `&fit=0` | board layouts: keep their natural size (with `&scale` as a zoom) instead of filling the window. They still shrink if they wouldn't fit |
 | `&pos=top` | score bar at the top of the screen |
@@ -72,6 +111,10 @@ Add these after `python ecs_receiver.py` in `start_receiver.bat`.
 | `--freq 433.92e6` | transmitter frequency in Hz |
 | `--port 8090` | use a different web port |
 | `--lan` | let other computers on the network open the pages (Windows will ask about the firewall) |
+| `--obs-password X` | OBS WebSocket password (or set `OBS_PASSWORD`) |
+| `--no-obs` | don't connect to OBS |
+| `--scene-left NAME` etc. | OBS scene names (`--scene-left`, `--scene-right`, `--scene-board`) |
+| `--board-seconds 10` | how long the board stays up after a wicket |
 | `--record test.cu8` | also save the raw radio signal, for troubleshooting |
 | `--iq FILE.cu8` | decode a saved radio recording instead of the live radio |
 | `--sr FILE.sr --realtime` | replay a PulseView logic capture (no radio needed) |
@@ -87,7 +130,18 @@ Run `python ecs_receiver.py --help` for the full list.
 | `/status` | status page: signal level, recent messages, *Clear scoreboard* |
 | `/state` | current values as JSON |
 | `/events` | server-sent events stream of every update |
-| `POST /reset` | clears all values |
+| `POST /reset` | clears all values and the match settings (new match) |
+| `/api/director` | match settings and camera status as JSON |
+| `/api/left`, `/api/right` | that end is bowling now: cut to its camera |
+| `/api/swap` | swap the ends |
+| `/api/home-first`, `/api/away-first` | who batted first |
+| `/api/auto?on=1` / `0` / `toggle` | automatic switching on or off |
+| `/api/board`, `/api/board?hold=1` | full board for 10 s, or until another key |
+| `/api/live` | back to the bowling-end camera |
+| `/api/scene?name=Break` | cut to any scene |
+
+The `/api/` commands work with GET (Stream Deck *Website* action, "GET request in background")
+or POST.
 
 ## Recording a test session
 
@@ -117,10 +171,14 @@ web server.
 ```
 receiver/   ecs_receiver.py   radio receiver, decoder and web server
             ecs_protocol.py   the ECS message format
+            director.py       automatic OBS camera and board switching
+            obs_ws.py         OBS WebSocket client (standard library only)
             scoreboard.html   OBS scoreboard page
             status.html       status page
             *.bat             Windows launchers
 tools/      ecs_decode.py     command-line decoder for PulseView .sr captures
+            make_streamdeck_icons.py   redraws the Stream Deck key images
+streamdeck/                   Stream Deck Mini layout and key images
 captures/                     logic-analyser recordings of the controller's TX2 data pin
 docs/       PROTOCOL.md       how the radio protocol works
 tests/                        pytest suite

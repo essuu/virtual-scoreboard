@@ -28,6 +28,7 @@ def isolated_state(tmp_path, monkeypatch):
     """Keep tests from touching receiver/state.json."""
     import ecs_receiver
     monkeypatch.setattr(ecs_receiver, "STATE_FILE", str(tmp_path / "state.json"))
+    monkeypatch.setattr(ecs_receiver.DIRECTOR, "state_file", str(tmp_path / "match.json"))
     ecs_receiver.BOARD.reset()
     ecs_receiver.BOARD.log.clear()
     yield
