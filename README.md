@@ -80,7 +80,9 @@ ready-made Stream Deck Mini layout with key images.
 
 Tell the receiver who batted first (**Home** or **Away**). The scoreboard then shows
 "Home batting" or "Away batting", and swaps it when the controller signals the end of the first
-innings. Add `&home=Tenterden&away=Visitors` to the OBS URL to show names instead.
+innings. On `classicboard` it reads BATTING – HOME in the top bar, after the umpire light; on
+`classic` it's BATTING with HOME/AWAY beneath it at the bottom of the middle column. Add
+`&home=Tenterden&away=Visitors` to the OBS URL to show names instead.
 
 ## Scoreboard layouts (add to the OBS URL)
 

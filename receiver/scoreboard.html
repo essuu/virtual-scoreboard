@@ -116,9 +116,9 @@
   .dig.hero { font-size: 150px; padding: 8px 26px; }
   .dig.hero .dv { right: 26px; top: 8px; color: var(--accent); }
   .dig.sm { font-size: 72px; }
-  .c-wkts { display: flex; align-items: center; gap: 22px; margin: 34px 0 0; }
+  .c-wkts { display: flex; align-items: center; gap: 22px; margin: 22px 0 0; }
   .c-wkts .c-lbl { margin: 0; }
-  .c-extras { margin-top: 40px; display: flex; align-items: center; gap: 18px; }
+  .c-extras { margin-top: 20px; display: flex; align-items: center; gap: 18px; }
   .c-extras .c-lbl { margin: 0; font-size: 34px; color: var(--muted); }
   .c-extras .dig { font-size: 56px; }
 
@@ -145,12 +145,22 @@
 
   /* umpire light: a plain circle to the right of the title, lit in the number colour while the
      light key is held. Positioned outside the title's box so the title stays centred. */
-  .t-wrap { position: relative; display: inline-block; }
-  .ulight { position: absolute; left: calc(100% + .6em); top: 50%; transform: translateY(-50%);
-            width: .9em; height: .9em; border-radius: 50%; background: rgba(255,255,255,.06); }
+  .t-wrap { position: relative; display: inline-block; min-height: 1em; vertical-align: middle; }
+  .t-side { position: absolute; left: calc(100% + .6em); top: 50%; transform: translateY(-50%);
+            display: flex; align-items: center; gap: .8em; white-space: nowrap; }
+  .t-wrap.notitle .t-side { position: static; transform: none; display: inline-flex; vertical-align: middle; }
+  .ulight { flex: none; width: .9em; height: .9em; border-radius: 50%; background: rgba(255,255,255,.06); }
   .ulight.on { background: var(--ink); box-shadow: 0 0 .35em rgba(244,241,232,.7); }
-  .t-wrap { min-height: 1em; vertical-align: middle; }
-  .t-wrap.notitle .ulight { position: static; transform: none; display: inline-block; vertical-align: middle; }
+  /* classicboard: "BATTING – HOME" after the umpire light in the top bar */
+  .t-bat { color: var(--muted); text-transform: uppercase; }
+  .t-bat b { color: var(--ink); font-weight: 700; }
+  /* classic: BATTING with HOME/AWAY beneath it, in the gap at the bottom of the middle column */
+  .c-col.mid { align-self: stretch; }
+  .c-batting { margin-top: auto; padding-top: 24px; display: flex; flex-direction: column; align-items: center; }
+  .c-batting .c-lbl { margin: 0 0 14px; }
+  .c-batting .c-side { background: #081a15; border-radius: 10px; padding: 8px 26px; min-width: 5.2ch; text-align: center;
+                       box-shadow: inset 0 0 0 2px rgba(255,255,255,.06), inset 0 6px 16px rgba(0,0,0,.45);
+                       font-size: 64px; font-weight: 700; line-height: 1.05; letter-spacing: .04em; text-transform: uppercase; }
 
   /* batting side (set from the Stream Deck / status page: who batted first + which innings) */
   .side-cell .val { font-size: 24px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--accent); }
@@ -160,8 +170,6 @@
   .side span { color: var(--muted); text-transform: uppercase; letter-spacing: .12em; font-size: .62em; }
   .side:empty, .side.hidden { display: none; }
   .board .side { position: static; width: fit-content; margin: -6px auto 12px; font-size: 20px; }
-  .classic .side { left: 30px; top: 22px; font-size: 26px; }
-  .cboard .side { left: 32px; top: 26px; font-size: 22px; }
 
   .flash { animation: flash 1.2s ease-out; }
   @keyframes flash { 0% { color: var(--flash); text-shadow: 0 0 18px rgba(255,220,120,.9); }
@@ -209,8 +217,7 @@
 
   <!-- classic: arranged like the ground scoreboard -->
   <div class="classic" id="classic">
-    <div class="side hidden"><b data-side-name></b><span>batting</span></div>
-    <div class="c-head"><span class="t-wrap"><span data-text="title"></span><span class="ulight" title="Umpire light"></span></span></div>
+    <div class="c-head"><span class="t-wrap"><span data-text="title"></span><span class="t-side"><span class="ulight" title="Umpire light"></span></span></span></div>
     <div class="c-grid">
       <div class="c-col">
         <div class="c-row c-batrow"><span class="dig sm"><span class="dg">88</span><span class="dv num" data-f="lh_no"></span></span><span class="c-lbl">Bat</span></div>
@@ -220,11 +227,12 @@
         <span class="c-lbl">Overs</span>
         <span class="dig"><span class="dg">88</span><span class="dv num" data-f="overs"></span></span>
       </div>
-      <div class="c-col">
+      <div class="c-col mid">
         <span class="c-lbl first">Total</span>
         <span class="dig hero"><span class="dg">888</span><span class="dv num" data-f="total"></span></span>
         <div class="c-wkts"><span class="c-lbl">For</span><span class="dig"><span class="dg">8</span><span class="dv num" data-f="wickets"></span></span><span class="c-lbl">Wkts</span></div>
         <div class="c-extras" data-show="extras"><span class="c-lbl">Extras</span><span class="dig"><span class="dg">88</span><span class="dv num" data-f="extras"></span></span></div>
+        <div class="c-batting hidden" data-side-show><span class="c-lbl">Batting</span><span class="c-side" data-side-name></span></div>
       </div>
       <div class="c-col">
         <div class="c-row c-batrow"><span class="c-lbl">Bat</span><span class="dig sm"><span class="dg">88</span><span class="dv num" data-f="rh_no"></span></span></div>
@@ -239,8 +247,7 @@
 
   <!-- classicboard: full-board tiles, ground-board arrangement -->
   <div class="cboard" id="cboard">
-    <div class="side hidden"><b data-side-name></b><span>batting</span></div>
-    <div class="b-title"><span class="t-wrap"><span data-text="title"></span><span class="ulight" title="Umpire light"></span></span></div>
+    <div class="b-title"><span class="t-wrap"><span data-text="title"></span><span class="t-side"><span class="ulight" title="Umpire light"></span><span class="t-bat hidden" data-side-show>Batting – <b data-side-name></b></span></span></span></div>
     <div class="cb-grid">
       <div class="tile cb-bat"><div class="head"><span class="lbl">Bat</span><span class="badge num" data-f="lh_no">–</span></div><div class="v num" data-f="lh_runs">–</div></div>
       <div class="tile cb-total"><span class="lbl">Total</span><div class="v num" data-f="total">0</div></div>
@@ -301,7 +308,7 @@
   function renderSide(match) {
     const side = (match && match.batting) || "";
     document.querySelectorAll("[data-side-name]").forEach(el => el.textContent = side ? sideNames[side] : "");
-    document.querySelectorAll(".side, .side-cell").forEach(el => el.classList.toggle("hidden", !side));
+    document.querySelectorAll(".side, .side-cell, [data-side-show]").forEach(el => el.classList.toggle("hidden", !side));
     fit();
   }
 
