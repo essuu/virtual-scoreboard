@@ -84,7 +84,7 @@ and the console's Category key uses the same numbers. PCS Pro lists 14 as `DlsPa
 | 11 | First-innings total | set at the end of the innings |
 | 12 | Runs required to win (`RunsRequiredToWin`) | first-innings total + 1 at the end of the 1st innings; counts down in the 2nd |
 | 13 | Overs remaining (`OversRemaining`) | blank in the 1st innings |
-| 14 | Bowler 1 number | set from the console's bowler-number config option. PCS Pro calls this field `DlsParScore` |
+| 14 | Bowler 1 number | confirmed over the air (bowler 1 = 8, bowler 2 = 9, 12 Oct 2026); set from the console's bowler-number config option. PCS Pro calls this field `DlsParScore` |
 | 15 | Bowler 2 number | not in the PCS Pro list |
 
 ## Behaviour
@@ -100,5 +100,4 @@ and the console's Category key uses the same numbers. PCS Pro lists 14 as `DlsPa
 
 - The umpire light's (field 0) on/off values still need writing down.
 - Whether the end-of-innings refresh also sends field 15 (the one capture of it stops during 14).
-- The digit 8 hasn't been seen in a capture yet.
 - In one capture, a total entered as 994 was sent as 996.
