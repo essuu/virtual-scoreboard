@@ -30,6 +30,10 @@ First public release.
 - Automatic OBS cameras: cuts to the camera at the bowling end each over, shows the full board for
   10 s after a wicket and holds it at the end of an innings. Uses OBS's built-in WebSocket server
   (no extra Python packages). Leaves break scenes alone until "Back to play".
+- OBS scene set-up on connect: the score bar is added on top of both camera scenes (one shared
+  "Score Overlay" scene) and kept above a camera feed added later; the Full Board scene gets the
+  classicboard scoreboard; missing scenes are created. Only adds what's missing, never edits.
+  "Set up OBS scenes" button, `--bar-options`, `--board-options`, `--no-obs-setup`.
 - Match controls for a Stream Deck or the status page: which end is bowling now, swap ends, who
   batted first, auto on/off, board, back to play, any scene. Stream Deck Mini layout and key
   images in `streamdeck/`.

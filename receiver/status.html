@@ -62,7 +62,8 @@
     <div class="grp"><span>Scenes</span>
       <button data-api="/api/board">Show board</button>
       <button data-api="/api/live">Back to play</button>
-      <button data-api="/api/auto?on=toggle" data-key="auto">Auto switching</button></div>
+      <button data-api="/api/auto?on=toggle" data-key="auto">Auto switching</button>
+      <button data-api="/api/setup-obs" title="Add the score bar to the camera scenes and the scoreboard to Full Board (only what's missing)">Set up OBS scenes</button></div>
     <div class="facts">
       <div>Batting: <b id="batting">–</b></div>
       <div>Bowling end: <b id="bowl">–</b></div>
@@ -70,6 +71,7 @@
       <div>On air: <b id="program">–</b></div>
     </div>
     <div id="missing" class="bad"></div>
+    <div id="setup" class="src"></div>
     <ul class="hist" id="hist"></ul>
   </section>
   <iframe src="/?bg=1&scale=0.8" title="Score bar preview"></iframe>
@@ -104,6 +106,9 @@ function showDirector(d){
     (d.board_active ? (d.board_hold ? " (held)" : " (back in " + Math.ceil(d.board_remaining) + " s)") : "");
   document.getElementById("missing").textContent = d.missing_scenes.length ?
     "OBS has no scene called " + d.missing_scenes.map(s => "\u201c"+s+"\u201d").join(", ") + "." : "";
+  const su = d.setup || {};
+  document.getElementById("setup").textContent = su.error ? "OBS set-up failed: " + su.error :
+    (su.done && su.done.length ? "Last OBS set-up: " + su.done.join("; ") + "." : "");
   const on = {"bf-home": d.batting_first==="home", "bf-away": d.batting_first==="away",
               "end-left": d.bowling_end==="left", "end-right": d.bowling_end==="right", "auto": d.auto};
   document.querySelectorAll("[data-key]").forEach(b => b.classList.toggle("on", !!on[b.dataset.key]));

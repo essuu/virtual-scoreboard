@@ -410,6 +410,8 @@ class Handler(BaseHTTPRequestHandler):
                 DIRECTOR.set_auto("toggle" if v == "toggle" else v in ("1", "on", "true", "yes"))
             elif cmd == "live":
                 DIRECTOR.go_live()
+            elif cmd == "setup-obs":
+                DIRECTOR.setup_obs()
             elif cmd == "scene":
                 DIRECTOR.cut_to(q.get("name", ""))
             elif cmd == "board":
@@ -503,6 +505,12 @@ def main():
     g.add_argument("--scene-right", default="Camera Right", help='scene for the right-end camera (default "Camera Right")')
     g.add_argument("--scene-board", default="Full Board", help='full-scoreboard scene (default "Full Board")')
     g.add_argument("--board-seconds", type=float, default=10, help="how long the board stays up after a wicket (default 10)")
+    g.add_argument("--no-obs-setup", action="store_true",
+                   help="don't add the score bar / scoreboard to the OBS scenes automatically")
+    g.add_argument("--bar-options", default="",
+                   help='extra options for the score bar on the cameras, e.g. "title=Tenterden%%20CC&home=Tenterden"')
+    g.add_argument("--board-options", default="layout=classicboard&bg=1",
+                   help='options for the Full Board scene (default "layout=classicboard&bg=1")')
     args = ap.parse_args()
     if args.rtl_sdr is None:
         local = os.path.join(HERE, "rtl_sdr.exe")
@@ -510,6 +518,10 @@ def main():
 
     DIRECTOR.scenes.update({"left": args.scene_left, "right": args.scene_right, "board": args.scene_board})
     DIRECTOR.board_seconds = args.board_seconds
+    DIRECTOR.auto_setup = not args.no_obs_setup
+    DIRECTOR.port = args.port
+    DIRECTOR.bar_query = args.bar_options.lstrip("?&")
+    DIRECTOR.board_query = args.board_options.lstrip("?&")
     if not args.no_obs:
         DIRECTOR.obs = OBSClient(args.obs_host, args.obs_port, args.obs_password,
                                  on_event=DIRECTOR.on_obs_event, on_connect=DIRECTOR.on_obs_connect,

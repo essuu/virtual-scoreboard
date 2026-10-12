@@ -19,6 +19,8 @@ Rules
 """
 import json, os, queue, threading, time
 
+import obs_setup
+
 LEFT, RIGHT = "left", "right"
 HOME, AWAY = "home", "away"
 
@@ -61,6 +63,13 @@ class Director:
         self.board_active = False       # the director put the board up and will take it down
         self.board_until = None         # clock() time to go back; None = hold
         self.missing_scenes = []
+        # OBS scene set-up (score bar on the cameras, full board scene)
+        self.auto_setup = True
+        self.port = 8765
+        self.bar_query = ""
+        self.board_query = "layout=classicboard&bg=1"
+        self.setup_done = []            # what the last set-up changed
+        self.setup_error = ""
         self.history = []               # recent decisions for the status page
         self._queue = queue.Queue()
         self._started = False
@@ -149,7 +158,36 @@ class Director:
         self._note("%s -> %s" % (why, scene))
         return True
 
+    def page_url(self, query):
+        return "http://127.0.0.1:%d/%s" % (self.port, ("?" + query) if query else "")
+
+    def setup_obs(self):
+        """Add the score bar to the camera scenes and the scoreboard to the board scene (only what's
+        missing). Returns the list of changes."""
+        if not self._obs_ok():
+            self.setup_error = "OBS not connected"
+            return []
+        try:
+            done = obs_setup.Setup(self.obs, self.port).run(
+                [self.scenes[LEFT], self.scenes[RIGHT]], self.scenes["board"],
+                self.page_url(self.bar_query), self.page_url(self.board_query))
+            self.setup_error = ""
+        except Exception as e:
+            self.setup_error = str(e)
+            self.log("Director: OBS set-up failed: %s" % e)
+            return []
+        self.setup_done = done
+        for d in done:
+            self._note("OBS set-up: " + d)
+        self.refresh_scenes()
+        return done
+
     def on_obs_connect(self):
+        if self.auto_setup:
+            self.setup_obs()
+        self.refresh_scenes()
+
+    def refresh_scenes(self):
         try:
             r = self.obs.request("GetCurrentProgramScene")
             name = r.get("sceneName") or r.get("currentProgramSceneName")
@@ -159,16 +197,25 @@ class Director:
             return
         with self.lock:
             self.on_program_changed(name)
-            self.missing_scenes = [s for s in self.scenes.values() if s not in have]
-        if self.missing_scenes:
+            missing = [s for s in self.scenes.values() if s not in have]
+            new_warning = missing and missing != self.missing_scenes
+            self.missing_scenes = missing
+        if new_warning:
             self.log("Director: WARNING - OBS has no scene called %s. Create it, or set the names with "
-                     "--scene-left / --scene-right / --scene-board." % ", ".join('"%s"' % s for s in self.missing_scenes))
+                     "--scene-left / --scene-right / --scene-board." % ", ".join('"%s"' % s for s in missing))
 
     def on_obs_event(self, etype, data):
         if etype == "CurrentProgramSceneChanged":
             self.on_program_changed(data.get("sceneName"))
         elif etype in ("SceneCreated", "SceneRemoved", "SceneNameChanged"):
-            self.on_obs_connect()
+            self.refresh_scenes()
+        elif etype == "SceneItemCreated" and self.auto_setup and self.is_camera(data.get("sceneName")):
+            # something new (e.g. the camera feed) was added to a camera scene: keep the bar above it
+            try:
+                if obs_setup.Setup(self.obs, self.port).keep_on_top(data["sceneName"]):
+                    self._note('Score bar kept on top of "%s"' % data["sceneName"])
+            except Exception as e:
+                self.log("Director: %s" % e)
 
     def on_program_changed(self, name):
         with self.lock:
@@ -346,6 +393,7 @@ class Director:
                 "board_active": self.board_active, "board_hold": self.board_active and self.board_until is None,
                 "board_remaining": remaining, "board_seconds": self.board_seconds,
                 "scenes": dict(self.scenes), "missing_scenes": list(self.missing_scenes),
+                "setup": {"auto": self.auto_setup, "done": list(self.setup_done), "error": self.setup_error},
                 "obs": {"enabled": self.obs is not None,
                         "connected": self._obs_ok(),
                         "error": getattr(self.obs, "error", "") if self.obs else "OBS control is off (--no-obs)"},

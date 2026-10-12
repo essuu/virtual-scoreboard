@@ -62,16 +62,26 @@ as the over starts. Pressing it at any later point also corrects the ends.
 
 ### OBS set-up
 
-1. Create three scenes named exactly **Camera Left**, **Camera Right** and **Full Board**
-   ("left" and "right" as seen from the scorebox). Add the scoreboard Browser Source to each camera
-   scene, and `?layout=classicboard` to Full Board. Other names can be used with
-   `--scene-left`, `--scene-right` and `--scene-board`.
-2. *Tools > WebSocket Server Settings*: tick **Enable WebSocket server** (port 4455). Either untick
+1. *Tools > WebSocket Server Settings*: tick **Enable WebSocket server** (port 4455). Either untick
    *Enable Authentication* (fine on a PC that isn't shared) or copy the password into
    `start_receiver.bat`: `python ecs_receiver.py --obs-password YOURPASSWORD`.
-3. Start the receiver. The status page shows *OBS connected*, or what's wrong, and warns if a
-   scene name doesn't exist. The scene change uses OBS's current transition, so a 300 ms fade or a
-   cut works as set in OBS.
+2. Put each IP camera in its own scene: **Camera Left** and **Camera Right** ("left" and "right"
+   as seen from the scorebox). Other names can be used with `--scene-left`, `--scene-right` and
+   `--scene-board`.
+3. Start the receiver. When it connects it sets the scenes up for you, adding only what's missing:
+   - the **score bar** on top of both camera scenes. It's one Browser Source ("Score Bar") in a
+     scene called "Score Overlay", which is nested in each camera scene, so there's one copy to
+     change. If you add a camera feed to a camera scene later, the bar is moved back on top of it.
+   - a **Full Board** scene with the full scoreboard (`?layout=classicboard&bg=1`).
+   - any of these three scenes that don't exist yet.
+
+   It never removes or edits anything, and a scene that already shows a page from the receiver
+   (directly or in a nested scene) is left alone, so it's safe if you've set things up by hand.
+   The status page shows what it did and has a **Set up OBS scenes** button to run it again.
+   Options for the bar go in `--bar-options`, e.g. `--bar-options "title=Tenterden%20CC&home=Tenterden"`
+   (in a `.bat` file write `%%20` for `%20`); `--no-obs-setup` turns this off.
+4. The status page shows *OBS connected*, or what's wrong. The scene change uses OBS's current
+   transition, so a 300 ms fade or a cut works as set in OBS.
 
 The status page has buttons for every control, and [`streamdeck/`](streamdeck/README.md) has a
 ready-made Stream Deck Mini layout with key images.
@@ -117,6 +127,9 @@ Add these after `python ecs_receiver.py` in `start_receiver.bat`.
 | `--no-obs` | don't connect to OBS |
 | `--scene-left NAME` etc. | OBS scene names (`--scene-left`, `--scene-right`, `--scene-board`) |
 | `--board-seconds 10` | how long the board stays up after a wicket |
+| `--bar-options "title=…"` | options for the score bar the receiver adds to the camera scenes |
+| `--board-options "layout=…"` | options for the Full Board scene's scoreboard (default `layout=classicboard&bg=1`) |
+| `--no-obs-setup` | don't add the score bar / scoreboard to the OBS scenes |
 | `--record test.cu8` | also save the raw radio signal, for troubleshooting |
 | `--iq FILE.cu8` | decode a saved radio recording instead of the live radio |
 | `--sr FILE.sr --realtime` | replay a PulseView logic capture (no radio needed) |
@@ -141,6 +154,7 @@ Run `python ecs_receiver.py --help` for the full list.
 | `/api/board`, `/api/board?hold=1` | full board for 10 s, or until another key |
 | `/api/live` | back to the bowling-end camera |
 | `/api/scene?name=Break` | cut to any scene |
+| `/api/setup-obs` | add the score bar to the camera scenes and the scoreboard to Full Board (only what's missing) |
 
 The `/api/` commands work with GET (Stream Deck *Website* action, "GET request in background")
 or POST.
@@ -175,6 +189,7 @@ receiver/   ecs_receiver.py   radio receiver, decoder and web server
             ecs_protocol.py   the ECS message format
             director.py       automatic OBS camera and board switching
             obs_ws.py         OBS WebSocket client (standard library only)
+            obs_setup.py      adds the score bar / scoreboard to the OBS scenes
             scoreboard.html   OBS scoreboard page
             status.html       status page
             *.bat             Windows launchers

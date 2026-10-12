@@ -6,6 +6,7 @@ events. It reconnects by itself, so OBS can be started before or after the recei
 import base64, hashlib, json, os, queue, socket, struct, threading, time, uuid
 
 EVENT_SCENES = 1 << 2          # obs-websocket EventSubscription.Scenes
+EVENT_SCENE_ITEMS = 1 << 7     # EventSubscription.SceneItems (to keep the score bar on top)
 
 
 # ----------------------------------------------------------------------------- websocket framing
@@ -216,7 +217,7 @@ class OBSClient:
         if hello.get("op") != 0:
             raise ConnectionError("expected Hello from OBS")
         hd = hello["d"]
-        ident = {"rpcVersion": 1, "eventSubscriptions": EVENT_SCENES}
+        ident = {"rpcVersion": 1, "eventSubscriptions": EVENT_SCENES | EVENT_SCENE_ITEMS}
         if "authentication" in hd:
             if not self.password:
                 raise ConnectionError("OBS wants a password: add --obs-password ... (OBS: Tools > "
