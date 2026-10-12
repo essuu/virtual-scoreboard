@@ -1,0 +1,26 @@
+# Runtime state and recordings
+receiver/state.json
+receiver/state.json.tmp
+*.cu8
+*.complex16s
+
+# RTL-SDR binaries (download from the RTL-SDR Blog release instead)
+*.exe
+*.dll
+
+# PulseView session files
+*.pvs
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# OS / editor
+Thumbs.db
+desktop.ini
+.DS_Store
+.vscode/
+.idea/

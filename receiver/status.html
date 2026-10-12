@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Receiver status</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { --bg:#f6f5f1; --ink:#1d2421; --muted:#66706b; --card:#fff; --line:#e3e1da; --ok:#2f7d4f; --warn:#b5651d; --accent:#0f2a22; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#141917; --ink:#e9ede9; --muted:#97a39c; --card:#1c2320; --line:#2c3531; --ok:#6cc58f; --warn:#e8a25c; --accent:#9fd3b8; } }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.45 "Segoe UI", system-ui, sans-serif; }
+  main { max-width: 980px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 22px; margin: 0 0 4px; } .sub { color: var(--muted); margin: 0 0 20px; }
+  .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(170px,1fr)); gap: 12px; margin-bottom: 20px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px 14px; }
+  .card .k { color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.08em; }
+  .card .v { font-size:22px; font-weight:600; font-variant-numeric: tabular-nums; }
+  .ok { color: var(--ok); } .warn { color: var(--warn); }
+  table { width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+  th, td { text-align:left; padding:7px 12px; border-bottom:1px solid var(--line); font-variant-numeric: tabular-nums; }
+  th { font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; }
+  .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin: 0 0 16px; }
+  a, button { font: inherit; }
+  button { border:1px solid var(--line); background:var(--card); color:var(--ink); border-radius:8px; padding:6px 12px; cursor:pointer; }
+  .src { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+  iframe { width:100%; height: 220px; border:1px solid var(--line); border-radius:10px; background:#3a4a44; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Scoreboard receiver</h1>
+  <p class="sub src" id="src">connecting…</p>
+  <div class="row">
+    <a href="/?bg=1" target="_blank">Open score bar</a>
+    <a href="/?layout=board&bg=1" target="_blank">Open full board</a>
+    <button id="reset" title="Clear all values (e.g. before a new match)">Clear scoreboard</button>
+  </div>
+  <div class="grid">
+    <div class="card"><div class="k">Last message</div><div class="v" id="age">–</div></div>
+    <div class="card"><div class="k">Signal above noise</div><div class="v" id="lvl">–</div></div>
+    <div class="card"><div class="k">Carrier offset</div><div class="v" id="cfo">–</div></div>
+    <div class="card"><div class="k">Bursts heard</div><div class="v" id="bursts">0</div></div>
+  </div>
+  <iframe src="/?bg=1&scale=0.8" title="Score bar preview"></iframe>
+  <h2 style="font-size:16px;margin:22px 0 8px">Recent messages</h2>
+  <table><thead><tr><th>Time</th><th>Field</th><th>Value</th><th>Copies</th><th>Level</th></tr></thead><tbody id="log"></tbody></table>
+</main>
+<script>
+function fmtAge(s){ if(s<60) return Math.round(s)+" s ago"; if(s<3600) return Math.round(s/60)+" min ago"; return Math.round(s/3600)+" h ago"; }
+async function tick(){
+  try{
+    const r = await fetch("/log",{cache:"no-store"}); const d = await r.json(); const st = d.stats;
+    document.getElementById("src").textContent = st.source || "";
+    document.getElementById("bursts").textContent = st.bursts;
+    const lv = st.last_level_db; const el = document.getElementById("lvl");
+    el.textContent = lv==null ? "–" : lv.toFixed(0)+" dB"; el.className = "v " + (lv==null?"":(lv>=12?"ok":"warn"));
+    document.getElementById("cfo").textContent = st.carrier_offset_khz==null ? "–" : st.carrier_offset_khz.toFixed(1)+" kHz";
+    const lg = d.log; document.getElementById("age").textContent = lg.length ? fmtAge(d.now - lg[lg.length-1].t) : "none yet";
+    document.getElementById("log").innerHTML = lg.slice().reverse().map(e =>
+      `<tr><td>${new Date(e.t*1000).toLocaleTimeString()}</td><td>${e.label}</td><td>${e.value||"(blank)"}</td><td>${e.copies}/10</td><td>${e.level_db==null?"–":e.level_db.toFixed(0)+" dB"}</td></tr>`).join("");
+  }catch(e){ document.getElementById("src").textContent = "receiver not responding"; }
+}
+document.getElementById("reset").onclick = async () => { if (confirm("Clear every value on the virtual scoreboard?")) await fetch("/reset",{method:"POST"}); };
+tick(); setInterval(tick, 1000);
+</script>
+</body>
+</html>

@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Scoreboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--
+  OBS Browser Source: http://localhost:8765/            (score bar, 1920x1080 canvas)
+  Options (add to the URL):
+    ?layout=board            full scoreboard panel instead of the bar
+    ?layout=classic          laid out like a traditional ground scoreboard
+    ?layout=classicboard     full-board tile style, arranged like the ground scoreboard
+    &title=Home%20CC         text shown in the title cell
+    &scale=1.2               make everything bigger/smaller
+    &pos=top                 bar at the top instead of the bottom
+    &bg=1                    solid background (handy for checking in a normal browser)
+-->
+<style>
+  :root {
+    --ink: #f4f1e8;
+    --muted: #b9c4bd;
+    --panel: #0f2a22;
+    --panel-2: #163a2f;
+    --line: rgba(255,255,255,.10);
+    --accent: #e8b84a;
+    --accent-ink: #1b1405;
+    --flash: #fff3c4;
+    --font: "Bahnschrift", "DIN Alternate", "Roboto Condensed", "Segoe UI", system-ui, sans-serif;
+  }
+  html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; }
+  body.solid { background: #3a4a44; }
+  body { font-family: var(--font); color: var(--ink); font-variant-numeric: tabular-nums;
+         -webkit-font-smoothing: antialiased; }
+  .num { font-feature-settings: "tnum" 1; }
+
+  /* ---------------- score bar ---------------- */
+  .bar { position: absolute; left: 50%; transform: translateX(-50%) scale(var(--scale,1));
+         transform-origin: bottom center; bottom: 48px;
+         display: flex; align-items: stretch; height: 64px;
+         border-radius: 10px; overflow: hidden;
+         box-shadow: 0 8px 28px rgba(0,0,0,.45); }
+  body.top .bar { bottom: auto; top: 40px; transform-origin: top center; }
+  .cell { display: flex; align-items: center; gap: 12px; padding: 0 20px;
+          background: var(--panel); border-left: 1px solid var(--line); white-space: nowrap; }
+  .cell:first-child { border-left: 0; }
+  .title { background: var(--accent); color: var(--accent-ink); font-weight: 700;
+           font-size: 22px; letter-spacing: .04em; text-transform: uppercase; }
+  .title:empty { display: none; }
+  .score { background: var(--panel-2); padding: 0 24px; }
+  .score .big { font-size: 44px; font-weight: 700; line-height: 1; }
+  .score .sep { font-size: 34px; color: var(--muted); margin: 0 2px; }
+  .lbl { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+  .val { font-size: 30px; font-weight: 600; }
+  .bat { gap: 10px; }
+  .bat .no { min-width: 34px; height: 34px; border-radius: 6px; display: grid; place-items: center;
+             background: rgba(255,255,255,.10); font-size: 20px; font-weight: 600; }
+  .bat .runs { font-size: 30px; font-weight: 600; min-width: 2.2ch; text-align: right; }
+  .bat.empty { display: none; }
+  .small .val { font-size: 24px; }
+  .hidden { display: none !important; }
+
+  /* ---------------- full board ---------------- */
+  .board { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%) scale(var(--scale,1));
+           width: 880px; background: var(--panel); border-radius: 18px; padding: 28px 32px 30px;
+           box-shadow: 0 16px 50px rgba(0,0,0,.5); display: none; }
+  body.layout-board .board { display: block; }
+  body.layout-board .bar { display: none; }
+  .b-title { text-align: center; font-size: 26px; font-weight: 700; letter-spacing: .08em;
+             text-transform: uppercase; color: var(--accent); margin-bottom: 14px; }
+  .b-title:empty { display: none; }
+  .b-row { display: grid; gap: 14px; margin-top: 14px; }
+  .b-main { grid-template-columns: 1.6fr 1fr 1fr; }
+  .b-bats { grid-template-columns: 1fr 1fr; }
+  .b-misc { grid-template-columns: repeat(4, 1fr); }
+  .tile { background: var(--panel-2); border-radius: 12px; padding: 12px 16px 14px; text-align: center; }
+  .tile .lbl { display: block; margin-bottom: 4px; }
+  .tile .v { font-size: 56px; font-weight: 700; line-height: 1.05; }
+  .b-main .tile:first-child .v { font-size: 92px; color: var(--accent); }
+  .b-misc .tile .v { font-size: 40px; }
+  .tile.batter { display: flex; align-items: center; justify-content: space-between; text-align: left; }
+  .tile.batter .no { font-size: 28px; color: var(--muted); }
+  .tile.batter .no b { color: var(--ink); font-size: 40px; margin-left: 6px; }
+  .tile.batter .v { font-size: 64px; }
+
+
+  /* ---------------- classic (ground scoreboard) ---------------- */
+  .classic { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%) scale(var(--scale,1));
+             width: 1240px; background: var(--panel); border-radius: 18px; padding: 0 40px 40px;
+             box-shadow: 0 16px 50px rgba(0,0,0,.5); display: none; }
+  body.layout-classic .classic { display: block; }
+  body.layout-classic .bar { display: none; }
+  .c-head { margin: 0 -40px 28px; padding: 14px 0 12px; text-align: center; border-radius: 18px 18px 0 0;
+            background: var(--panel-2); border-bottom: 1px solid var(--line);
+            font-size: 44px; font-weight: 700; letter-spacing: .03em; color: var(--ink); }
+  .c-head:empty { display: none; }
+  .c-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; column-gap: 56px; }
+  .c-col { display: flex; flex-direction: column; align-items: center; }
+  .c-lbl { font-size: 46px; font-weight: 700; letter-spacing: .02em; line-height: 1; text-transform: uppercase;
+           margin: 30px 0 14px; white-space: nowrap; }
+  .c-lbl.first { margin-top: 0; }
+  .c-lbl sup { font-size: .5em; vertical-align: .9em; text-transform: none; margin-right: .18em; }
+  .c-row { display: flex; align-items: center; gap: 18px; }
+  .c-batrow { margin-bottom: 14px; }
+  .c-batrow .c-lbl { margin: 0; }
+  /* digit window: faint 8s behind, like the LED segments on the real board */
+  .dig { position: relative; display: inline-block; background: #081a15; border-radius: 10px;
+         padding: 6px 18px; box-shadow: inset 0 0 0 2px rgba(255,255,255,.06), inset 0 6px 16px rgba(0,0,0,.45);
+         font-size: 96px; font-weight: 700; line-height: 1.05; text-align: right; }
+  .dig .dg { color: rgba(255,255,255,.055); }
+  .dig .dv { position: absolute; right: 18px; top: 6px; color: var(--ink); }
+  .dig.hero { font-size: 150px; padding: 8px 26px; }
+  .dig.hero .dv { right: 26px; top: 8px; color: var(--accent); }
+  .dig.sm { font-size: 72px; }
+  .c-wkts { display: flex; align-items: center; gap: 22px; margin: 34px 0 0; }
+  .c-wkts .c-lbl { margin: 0; }
+  .c-extras { margin-top: 40px; display: flex; align-items: center; gap: 18px; }
+  .c-extras .c-lbl { margin: 0; font-size: 34px; color: var(--muted); }
+  .c-extras .dig { font-size: 56px; }
+
+
+  /* ---------------- classicboard: full-board tiles in the ground-board arrangement ---------------- */
+  .cboard { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%) scale(var(--scale,1));
+            width: 1100px; background: var(--panel); border-radius: 18px; padding: 28px 32px 32px;
+            box-shadow: 0 16px 50px rgba(0,0,0,.5); display: none; }
+  body.layout-classicboard .cboard { display: block; }
+  body.layout-classicboard .bar { display: none; }
+  .cb-grid { display: grid; grid-template-columns: 1fr 1.25fr 1fr; gap: 14px; }
+  .cboard .tile { display: flex; flex-direction: column; justify-content: center; }
+  .cboard .tile .v { font-size: 64px; }
+  .cboard .cb-total { grid-row: span 1; }
+  .cboard .cb-total .v { font-size: 104px; color: var(--accent); }
+  .cboard .cb-bat .head { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 2px; }
+  .cboard .cb-bat .head .lbl { margin: 0; }
+  .cboard .cb-bat .badge { min-width: 44px; height: 38px; padding: 0 8px; border-radius: 8px; display: grid; place-items: center;
+                           background: rgba(255,255,255,.10); font-size: 26px; font-weight: 700; }
+  .cboard .cb-bat .v { font-size: 80px; }
+  .cboard .cb-wk .v { font-size: 72px; }
+  .cboard .cb-wk .v small { font-size: 26px; color: var(--muted); font-weight: 600; letter-spacing: .08em;
+                            text-transform: uppercase; margin: 0 14px; vertical-align: 14px; }
+
+  .flash { animation: flash 1.2s ease-out; }
+  @keyframes flash { 0% { color: var(--flash); text-shadow: 0 0 18px rgba(255,220,120,.9); }
+                     100% { text-shadow: none; } }
+  .stale::after { content: ""; position: absolute; right: 8px; top: 8px; width: 8px; height: 8px;
+                  border-radius: 50%; background: #d9534f; }
+</style>
+</head>
+<body>
+  <!-- score bar -->
+  <div class="bar" id="bar">
+    <div class="cell title" data-text="title"></div>
+    <div class="cell score">
+      <span class="big num" data-f="total">0</span><span class="sep">-</span><span class="big num" data-f="wickets">0</span>
+    </div>
+    <div class="cell"><span class="lbl">Overs</span><span class="val num" data-f="overs">0</span></div>
+    <div class="cell bat" data-bat="lh"><span class="no num" data-f="lh_no"></span><span class="runs num" data-f="lh_runs"></span></div>
+    <div class="cell bat" data-bat="rh"><span class="no num" data-f="rh_no"></span><span class="runs num" data-f="rh_runs"></span></div>
+    <div class="cell small" data-show="extras"><span class="lbl">Extras</span><span class="val num" data-f="extras"></span></div>
+    <div class="cell small" data-show="last_bat"><span class="lbl">Last man</span><span class="val num" data-f="last_bat"></span></div>
+    <div class="cell small" data-show="first_inns"><span class="lbl">1st inns</span><span class="val num" data-f="first_inns"></span></div>
+  </div>
+
+  <!-- full board -->
+  <div class="board" id="board">
+    <div class="b-title" data-text="title"></div>
+    <div class="b-row b-main">
+      <div class="tile"><span class="lbl">Total</span><div class="v num" data-f="total">0</div></div>
+      <div class="tile"><span class="lbl">Wickets</span><div class="v num" data-f="wickets">0</div></div>
+      <div class="tile"><span class="lbl">Overs</span><div class="v num" data-f="overs">0</div></div>
+    </div>
+    <div class="b-row b-bats">
+      <div class="tile batter"><span class="no">Bat <b class="num" data-f="lh_no">–</b></span><span class="v num" data-f="lh_runs">–</span></div>
+      <div class="tile batter"><span class="no">Bat <b class="num" data-f="rh_no">–</b></span><span class="v num" data-f="rh_runs">–</span></div>
+    </div>
+    <div class="b-row b-misc">
+      <div class="tile"><span class="lbl">Extras</span><div class="v num" data-f="extras">–</div></div>
+      <div class="tile"><span class="lbl">Last man</span><div class="v num" data-f="last_bat">–</div></div>
+      <div class="tile"><span class="lbl">Fall of wkt</span><div class="v num" data-f="last_wkt_total">–</div></div>
+      <div class="tile"><span class="lbl">1st innings</span><div class="v num" data-f="first_inns">–</div></div>
+    </div>
+  </div>
+
+  <!-- classic: arranged like the ground scoreboard -->
+  <div class="classic" id="classic">
+    <div class="c-head" data-text="title"></div>
+    <div class="c-grid">
+      <div class="c-col">
+        <div class="c-row c-batrow"><span class="dig sm"><span class="dg">88</span><span class="dv num" data-f="lh_no"></span></span><span class="c-lbl">Bat</span></div>
+        <span class="dig"><span class="dg">888</span><span class="dv num" data-f="lh_runs"></span></span>
+        <span class="c-lbl">Last man</span>
+        <span class="dig"><span class="dg">888</span><span class="dv num" data-f="last_bat"></span></span>
+        <span class="c-lbl">Overs</span>
+        <span class="dig"><span class="dg">88</span><span class="dv num" data-f="overs"></span></span>
+      </div>
+      <div class="c-col">
+        <span class="c-lbl first">Total</span>
+        <span class="dig hero"><span class="dg">888</span><span class="dv num" data-f="total"></span></span>
+        <div class="c-wkts"><span class="c-lbl">For</span><span class="dig"><span class="dg">8</span><span class="dv num" data-f="wickets"></span></span><span class="c-lbl">Wkts</span></div>
+        <div class="c-extras" data-show="extras"><span class="c-lbl">Extras</span><span class="dig"><span class="dg">88</span><span class="dv num" data-f="extras"></span></span></div>
+      </div>
+      <div class="c-col">
+        <div class="c-row c-batrow"><span class="c-lbl">Bat</span><span class="dig sm"><span class="dg">88</span><span class="dv num" data-f="rh_no"></span></span></div>
+        <span class="dig"><span class="dg">888</span><span class="dv num" data-f="rh_runs"></span></span>
+        <span class="c-lbl">Last wkt</span>
+        <span class="dig"><span class="dg">888</span><span class="dv num" data-f="last_wkt_total"></span></span>
+        <span class="c-lbl"><sup>1st</sup>Inns</span>
+        <span class="dig"><span class="dg">888</span><span class="dv num" data-f="first_inns"></span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- classicboard: full-board tiles, ground-board arrangement -->
+  <div class="cboard" id="cboard">
+    <div class="b-title" data-text="title"></div>
+    <div class="cb-grid">
+      <div class="tile cb-bat"><div class="head"><span class="lbl">Bat</span><span class="badge num" data-f="lh_no">–</span></div><div class="v num" data-f="lh_runs">–</div></div>
+      <div class="tile cb-total"><span class="lbl">Total</span><div class="v num" data-f="total">0</div></div>
+      <div class="tile cb-bat"><div class="head"><span class="lbl">Bat</span><span class="badge num" data-f="rh_no">–</span></div><div class="v num" data-f="rh_runs">–</div></div>
+
+      <div class="tile"><span class="lbl">Last man</span><div class="v num" data-f="last_bat">–</div></div>
+      <div class="tile cb-wk"><span class="lbl">Wickets</span><div class="v"><small>for</small><span class="num" data-f="wickets">0</span><small>wkts</small></div></div>
+      <div class="tile"><span class="lbl">Last wkt</span><div class="v num" data-f="last_wkt_total">–</div></div>
+
+      <div class="tile"><span class="lbl">Overs</span><div class="v num" data-f="overs">0</div></div>
+      <div class="tile"><span class="lbl">Extras</span><div class="v num" data-f="extras">–</div></div>
+      <div class="tile"><span class="lbl">1st innings</span><div class="v num" data-f="first_inns">–</div></div>
+    </div>
+  </div>
+
+<script>
+(function () {
+  const q = new URLSearchParams(location.search);
+  const layout = q.get("layout") || "bar";
+  document.body.classList.add("layout-" + layout);
+  if (q.get("pos") === "top") document.body.classList.add("top");
+  if (q.get("bg")) document.body.classList.add("solid");
+  if (q.get("scale")) document.documentElement.style.setProperty("--scale", q.get("scale"));
+  const defTitle = "";
+  document.querySelectorAll('[data-text="title"]').forEach(el => el.textContent = q.has("title") ? q.get("title") : defTitle);
+
+  // fields that read as 0 when blank on the main score; others show a dash on the board
+  const zeroIfBlank = new Set(["total", "wickets", "overs"]);
+  let last = {};
+
+  function render(values) {
+    document.querySelectorAll("[data-f]").forEach(el => {
+      const f = el.dataset.f;
+      let v = (values[f] || "").trim();
+      // a batter who is in but hasn't scored shows 0
+      const batIn = (f === "lh_runs" || f === "rh_runs") && (values[f.slice(0, 2) + "_no"] || "").trim();
+      if (!v) v = (zeroIfBlank.has(f) || batIn) ? "0" : ((layout === "board" || layout === "classicboard") ? "–" : "");
+      if (el.textContent !== v) {
+        el.textContent = v;
+        if (f in last) { el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash"); }
+      }
+    });
+    // bar: hide a batter cell with no batter number, hide optional cells when blank
+    document.querySelectorAll("[data-bat]").forEach(el => {
+      const side = el.dataset.bat;
+      el.classList.toggle("empty", !(values[side + "_no"] || "").trim());
+    });
+    document.querySelectorAll("[data-show]").forEach(el => {
+      el.classList.toggle("hidden", !(values[el.dataset.show] || "").trim());
+    });
+    last = Object.assign({}, values);
+  }
+
+  function poll() {
+    fetch("/state", { cache: "no-store" }).then(r => r.json()).then(s => render(s.values)).catch(() => {});
+  }
+
+  let es;
+  function connect() {
+    try {
+      es = new EventSource("/events");
+      es.onmessage = e => { try { render(JSON.parse(e.data).values); } catch (_) {} };
+      es.onerror = () => { es.close(); setTimeout(connect, 3000); };
+    } catch (_) { setInterval(poll, 1000); }
+  }
+  poll();
+  connect();
+  setInterval(poll, 10000);   // belt and braces
+})();
+</script>
+</body>
+</html>
