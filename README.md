@@ -50,8 +50,8 @@ of an innings.)
 |---|---|
 | *(none)* | score bar along the bottom of the screen |
 | `?layout=board` | compact full scoreboard panel |
-| `?layout=classic` | laid out like a traditional ground scoreboard, with the umpire light beside the last man's score |
-| `?layout=classicboard` | full-board tiles, arranged like the ground scoreboard, with the umpire light beside the last man's score |
+| `?layout=classic` | laid out like a traditional ground scoreboard, with the umpire light beside the title |
+| `?layout=classicboard` | full-board tiles, arranged like the ground scoreboard, with the umpire light beside the title |
 | `&title=Home%20CC` | text in the title cell (hidden if not set) |
 | `&scale=1.3` | bigger or smaller |
 | `&pos=top` | score bar at the top of the screen |
