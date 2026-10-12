@@ -48,7 +48,7 @@ at least two frames agree.
 
 | Group index | Digit meaning |
 |---|---|
-| 3 | field ID (1–14) |
+| 3 | field ID (0–14) |
 | 2 | hundreds |
 | 1 | tens |
 | 0 | units |
@@ -64,8 +64,12 @@ Example: total = 55 → field 5, digits `F 5 5`:
 
 ## Fields
 
+The field IDs match the "category" numbers in ECS's PCS Pro software config (names in brackets),
+and the console's Category key uses the same numbers.
+
 | ID | Field | Notes |
 |---|---|---|
+| 0 | Umpire light (`UmpireLight`) | from the PCS Pro config; not yet seen in a capture |
 | 1 | Left-hand batter number | blanked when the batter is out |
 | 2 | Right-hand batter number | |
 | 3 | Left-hand batter runs | |
@@ -77,9 +81,9 @@ Example: total = 55 → field 5, digits `F 5 5`:
 | 9 | Last batter's score | |
 | 10 | Total at last wicket | |
 | 11 | First-innings total | set at the end of the innings |
-| 12 | Target | first-innings total + 1 |
-| 13 | DLS par score | *likely, not yet confirmed*; blank in the 1st innings |
-| 14 | Runs remaining | *likely, not yet confirmed*; blank in the 1st innings |
+| 12 | Runs required to win (`RunsRequiredToWin`) | first-innings total + 1 at the end of the 1st innings; counts down in the 2nd |
+| 13 | Overs remaining (`OversRemaining`) | blank in the 1st innings |
+| 14 | DLS par score (`DlsParScore`) | the ECS console has no DLS par category, so this is never set; it only appears (blank) in the end-of-innings refresh |
 
 ## Behaviour
 
@@ -92,7 +96,6 @@ Example: total = 55 → field 5, digits `F 5 5`:
 
 ## Still to confirm
 
-- Fields 13 and 14 need a second-innings test: add runs and check field 14 = target − total, then set
-  a DLS par and check it arrives as field 13.
+- Field 0 (umpire light) hasn't been captured yet; it probably comes from the console's light key.
 - The digit 8 hasn't been seen in a capture yet.
 - In one capture, a total entered as 994 was sent as 996.

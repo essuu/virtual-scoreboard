@@ -9,7 +9,8 @@ First public release.
 - OBS scoreboard page with four layouts (bar, board, classic, classicboard) and a status page.
 - Live updates via server-sent events. The last values are saved across restarts.
 - Replay of `.cu8` IQ recordings and PulseView `.sr` logic captures.
-- Fields 13 and 14 are named DLS par score and runs remaining. This is likely but not yet
-  confirmed.
+- Field names follow ECS's PCS Pro category list: 12 is runs required, 13 is overs remaining,
+  14 is DLS par score (never set by the ECS console), and 0 is the umpire light. Earlier builds
+  guessed target, DLS par and runs remaining for 12–14.
 - Fix: replaying a `.sr` capture could split a burst in two and log a message twice.
 - `--version` option, tests, and CI on Windows and Linux.

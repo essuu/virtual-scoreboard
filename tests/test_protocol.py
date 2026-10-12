@@ -32,8 +32,11 @@ def test_rejects_bad_group_index():
     assert proto.decode_frame(bad) is None
 
 
+def test_decodes_umpire_light_field_0():
+    assert proto.decode_frame(frame_bits(0, (15, 15, 1))) == (0, "1")
+
+
 def test_rejects_unknown_field():
-    assert proto.decode_frame(frame_bits(0, (15, 15, 1))) is None
     assert proto.decode_frame(frame_bits(15, (15, 15, 1))) is None
 
 
@@ -46,8 +49,8 @@ def test_rejects_embedded_blank():
 
 
 def test_every_field_has_a_name_and_label():
-    assert set(proto.FIELDS) == set(proto.FIELD_LABELS) == set(range(1, 15))
-    assert len(set(proto.FIELDS.values())) == 14
+    assert set(proto.FIELDS) == set(proto.FIELD_LABELS) == set(range(0, 15))
+    assert len(set(proto.FIELDS.values())) == 15
 
 
 def test_levels_roundtrip():
