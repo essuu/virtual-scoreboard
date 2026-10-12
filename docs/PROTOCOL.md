@@ -48,7 +48,7 @@ at least two frames agree.
 
 | Group index | Digit meaning |
 |---|---|
-| 3 | field ID (0–15 possible; 0–14 seen so far) |
+| 3 | field ID (0–15, all in use) |
 | 2 | hundreds |
 | 1 | tens |
 | 0 | units |
@@ -64,12 +64,13 @@ Example: total = 55 → field 5, digits `F 5 5`:
 
 ## Fields
 
-The field IDs match the "category" numbers in ECS's PCS Pro software config (names in brackets),
-and the console's Category key uses the same numbers.
+Fields 0–13 match the "category" numbers in ECS's PCS Pro software config (names in brackets),
+and the console's Category key uses the same numbers. PCS Pro lists 14 as `DlsParScore` and has no
+15, but the ECS console has no DLS par; it uses 14 and 15 for the bowler numbers.
 
 | ID | Field | Notes |
 |---|---|---|
-| 0 | Umpire light (`UmpireLight`) | from the PCS Pro config; not yet seen in a capture |
+| 0 | Umpire light (`UmpireLight`) | received live; on/off values to be documented |
 | 1 | Left-hand batter number | blanked when the batter is out |
 | 2 | Right-hand batter number | |
 | 3 | Left-hand batter runs | |
@@ -83,7 +84,8 @@ and the console's Category key uses the same numbers.
 | 11 | First-innings total | set at the end of the innings |
 | 12 | Runs required to win (`RunsRequiredToWin`) | first-innings total + 1 at the end of the 1st innings; counts down in the 2nd |
 | 13 | Overs remaining (`OversRemaining`) | blank in the 1st innings |
-| 14 | DLS par score (`DlsParScore`) in PCS Pro | the ECS console has no DLS par category, but **setting bowler 1's number changes field 14**, so on this console it may be a bowler number. Under test |
+| 14 | Bowler 1 number | set from the console's bowler-number config option. PCS Pro calls this field `DlsParScore` |
+| 15 | Bowler 2 number | not in the PCS Pro list |
 
 ## Behaviour
 
@@ -96,8 +98,7 @@ and the console's Category key uses the same numbers.
 
 ## Still to confirm
 
-- Field 0 (umpire light) is received live; its on/off values still need writing down.
-- Field 14 vs the bowler numbers, and whether bowler 2 (or anything else) uses field 15. The receiver
-  keeps unknown field IDs and shows them as "Field N (unknown)" on the status page.
+- The umpire light's (field 0) on/off values still need writing down.
+- Whether the end-of-innings refresh also sends field 15 (the one capture of it stops during 14).
 - The digit 8 hasn't been seen in a capture yet.
 - In one capture, a total entered as 994 was sent as 996.

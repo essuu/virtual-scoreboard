@@ -12,17 +12,19 @@ __version__ = "1.0.0"
 
 HALF_BIT_S = 531e-6
 
-# Field IDs match the "category" numbers in ECS's PCS Pro software config.
+# Field IDs 0-13 match the "category" numbers in ECS's PCS Pro software config. PCS Pro calls
+# 14 DlsParScore, but on the ECS console 14 and 15 carry the two bowler numbers (confirmed live).
 FIELDS = {
     0: "umpire_light", 1: "lh_no", 2: "rh_no", 3: "lh_runs", 4: "rh_runs", 5: "total", 6: "wickets",
     7: "overs", 8: "extras", 9: "last_bat", 10: "last_wkt_total", 11: "first_inns",
-    12: "runs_required", 13: "overs_remaining", 14: "dls_par",
+    12: "runs_required", 13: "overs_remaining", 14: "bowler1_no",
+    15: "bowler2_no",
 }
 FIELD_LABELS = {
     0: "Umpire light", 1: "LH batter no.", 2: "RH batter no.", 3: "LH batter runs", 4: "RH batter runs",
     5: "Total", 6: "Wickets", 7: "Overs", 8: "Extras", 9: "Last batter",
     10: "Total at last wkt", 11: "1st innings total", 12: "Runs required", 13: "Overs remaining",
-    14: "Field 14 (bowler no.? / DLS par)",
+    14: "Bowler 1 no.", 15: "Bowler 2 no.",
 }
 
 

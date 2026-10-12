@@ -36,10 +36,14 @@ def test_decodes_umpire_light_field_0():
     assert proto.decode_frame(frame_bits(0, (15, 15, 1))) == (0, "1")
 
 
-def test_keeps_unknown_field_15():
-    assert proto.decode_frame(frame_bits(15, (15, 15, 1))) == (15, "1")
-    assert proto.field_name(15) == "field_15"
-    assert "15" in proto.field_label(15)
+def test_decodes_bowler_2_field_15():
+    assert proto.decode_frame(frame_bits(15, (15, 15, 9))) == (15, "9")
+    assert proto.field_name(15) == "bowler2_no"
+
+
+def test_unknown_field_gets_generic_name():
+    assert proto.field_name(16) == "field_16"
+    assert "16" in proto.field_label(16)
 
 
 def test_rejects_non_bcd_digit():
@@ -51,8 +55,8 @@ def test_rejects_embedded_blank():
 
 
 def test_every_field_has_a_name_and_label():
-    assert set(proto.FIELDS) == set(proto.FIELD_LABELS) == set(range(0, 15))
-    assert len(set(proto.FIELDS.values())) == 15
+    assert set(proto.FIELDS) == set(proto.FIELD_LABELS) == set(range(0, 16))
+    assert len(set(proto.FIELDS.values())) == 16
 
 
 def test_levels_roundtrip():

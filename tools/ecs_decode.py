@@ -6,7 +6,7 @@ Invert bits; 4 groups of 8: [3-bit group index 3..0][4-bit BCD digit][1 spare bi
 Group 3 digit = field ID; groups 2,1,0 = hundreds, tens, units (0xF = blank)."""
 import numpy as np, os, sys, zipfile, re
 from collections import Counter
-FIELDS={0:'Umpire light',1:'LH bat no.',2:'RH bat no.',3:'LH bat runs',4:'RH bat runs',5:'Total',6:'Wickets',7:'Overs',8:'Extras',9:'Last batter',10:'Total at last wkt',11:'1st inns total',12:'Runs required',13:'Overs remaining',14:'Bowler no.?/DLS par'}
+FIELDS={0:'Umpire light',1:'LH bat no.',2:'RH bat no.',3:'LH bat runs',4:'RH bat runs',5:'Total',6:'Wickets',7:'Overs',8:'Extras',9:'Last batter',10:'Total at last wkt',11:'1st inns total',12:'Runs required',13:'Overs remaining',14:'Bowler 1 no.',15:'Bowler 2 no.'}
 def load(path):
     z=zipfile.ZipFile(path); meta=z.read('metadata').decode()
     sr=float(re.search(r'samplerate=([\d.]+) (\w*)Hz',meta).group(1))*{'':1,'k':1e3,'M':1e6}[re.search(r'samplerate=[\d.]+ (\w*)Hz',meta).group(1)]
