@@ -36,7 +36,8 @@ First public release.
   "Set up OBS scenes" button, `--bar-options`, `--board-options`, `--no-obs-setup`.
 - Match controls for a Stream Deck or the status page: which end is bowling now, swap ends, who
   batted first, auto on/off, board, back to play, any scene. Stream Deck Mini layout and key
-  images in `streamdeck/`.
+  images in `streamdeck/`, plus a ready-made Stream Deck Mini profile to import
+  (`Virtual-Scoreboard-Mini.streamDeckProfile`).
 - Batting side ("Home batting" / "Away batting", or names with `&home=` / `&away=`) on every
   layout, swapped automatically for the second innings. Classicboard shows BATTING – HOME in the
   top bar after the umpire light; classic shows BATTING over HOME/AWAY at the bottom of the middle

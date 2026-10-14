@@ -7,6 +7,26 @@ Key images are in [`icons/`](icons) (drag a PNG onto the key's icon in the Strea
 The receiver must be running on the same PC (`http://127.0.0.1:8765`). If you changed the port
 with `--port`, use that number instead.
 
+## Quick set-up: import the ready-made profile
+
+[`Virtual-Scoreboard-Mini.streamDeckProfile`](Virtual-Scoreboard-Mini.streamDeckProfile) has the
+whole layout below (main page, Setup and Breaks folders) with every URL and icon already in place.
+
+1. Install the Elgato Stream Deck app and plug in the Stream Deck Mini. The profile was exported
+   from Stream Deck 7.6; older versions may not open it.
+2. Double-click the `.streamDeckProfile` file. Stream Deck adds a profile called **OBS Automation**.
+3. Choose **OBS Automation** in the profile list at the top of the Stream Deck window.
+
+The profile is linked to OBS (`C:\Program Files\obs-studio\bin\64bit\obs64.exe`), so Stream Deck
+switches to it whenever OBS is the window in front. To choose it by hand instead, remove the linked
+app in the profile's settings.
+
+It was made on a Stream Deck **Mini** (6 keys). On a bigger Stream Deck it imports, but you'll need
+to rearrange the keys. If your receiver uses a different port, or your OBS break scenes have
+different names, edit those keys' URLs after importing.
+
+To build it yourself instead, follow the tables below.
+
 ## Main page
 
 | | | |
