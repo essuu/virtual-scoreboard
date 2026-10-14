@@ -6,9 +6,9 @@
 <title>Test Camera</title>
 <!--
   A stand-in for a camera feed, for trying the OBS switching at home.
-    /testcard?end=left    blue,  "LEFT END"  (Caxton End)
-    /testcard?end=right   amber, "RIGHT END" (Smallhythe End)
-  Options: &name=Pavilion%20End  (the end's name)   &label=...  (override the big label)
+    /testcard?end=left    blue,  "LEFT END"
+    /testcard?end=right   amber, "RIGHT END"
+  Options: &name=Pavilion%20End  (adds the end's name under the label)   &label=...  (override the big label)
   The clock and the moving ball show the picture is live, not frozen.
 -->
 <style>
@@ -61,7 +61,8 @@ document.getElementById("corner").textContent = right ? "CAM R" : "CAM L";
 const label = q.get("label") || (right ? "RIGHT END" : "LEFT END");
 document.getElementById("big").innerHTML = right
   ? label + ' <span class="arrow">&#9654;</span>' : '<span class="arrow">&#9664;</span> ' + label;
-document.getElementById("name").textContent = q.get("name") || (right ? "Smallhythe End" : "Caxton End");
+const endName = document.getElementById("name");
+if (q.get("name")) endName.textContent = q.get("name"); else endName.remove();
 const clock = document.getElementById("clock");
 const pad = n => String(n).padStart(2, "0");
 function tick() {
