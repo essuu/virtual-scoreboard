@@ -78,6 +78,12 @@ class ModelOBS:
             items.remove(it)
             items.insert(d["sceneItemIndex"], it)
             return {}
+        if rtype == "RemoveInput":
+            name = d["inputName"]
+            del self.inputs[name]
+            for items in self.scenes.values():
+                items[:] = [i for i in items if i["sourceName"] != name]
+            return {}
         if rtype == "GetCurrentProgramScene":
             return {"sceneName": self.program, "currentProgramSceneName": self.program}
         if rtype == "SetCurrentProgramScene":

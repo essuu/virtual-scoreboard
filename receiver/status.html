@@ -64,6 +64,10 @@
       <button data-api="/api/live">Back to play</button>
       <button data-api="/api/auto?on=toggle" data-key="auto">Auto switching</button>
       <button data-api="/api/setup-obs" title="Add the score bar to the camera scenes and the scoreboard to Full Board (only what's missing)">Set up OBS scenes</button></div>
+    <div class="grp"><span>Testing at home</span>
+      <button data-api="/api/test-cameras?on=1" title="Put a LEFT / RIGHT test card in each camera scene, standing in for the real cameras">Add test cameras</button>
+      <button data-api="/api/test-cameras?on=0" title="Remove the test cards again">Remove test cameras</button>
+      <a href="/testcard?end=left" target="_blank">left card</a> · <a href="/testcard?end=right" target="_blank">right card</a></div>
     <div class="facts">
       <div>Batting: <b id="batting">–</b></div>
       <div>Bowling end: <b id="bowl">–</b></div>

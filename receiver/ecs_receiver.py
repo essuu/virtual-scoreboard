@@ -412,6 +412,8 @@ class Handler(BaseHTTPRequestHandler):
                 DIRECTOR.go_live()
             elif cmd == "setup-obs":
                 DIRECTOR.setup_obs()
+            elif cmd == "test-cameras":
+                DIRECTOR.test_cameras(q.get("on", "1").lower() in ("1", "on", "true", "yes"))
             elif cmd == "scene":
                 DIRECTOR.cut_to(q.get("name", ""))
             elif cmd == "board":
@@ -430,6 +432,9 @@ class Handler(BaseHTTPRequestHandler):
             return self._api()
         if path in ("/", "/scoreboard", "/index.html"):
             with open(os.path.join(HERE, "scoreboard.html"), "rb") as f:
+                return self._send(200, f.read(), "text/html; charset=utf-8")
+        if path == "/testcard":
+            with open(os.path.join(HERE, "testcard.html"), "rb") as f:
                 return self._send(200, f.read(), "text/html; charset=utf-8")
         if path == "/status":
             with open(os.path.join(HERE, "status.html"), "rb") as f:

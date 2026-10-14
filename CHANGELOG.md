@@ -41,3 +41,7 @@ First public release.
   layout, swapped automatically for the second innings. Classicboard shows BATTING – HOME in the
   top bar after the umpire light; classic shows BATTING over HOME/AWAY at the bottom of the middle
   column.
+- Test cameras for trying the switching at home: `/testcard?end=left|right` is a moving, clearly
+  labelled stand-in picture (blue LEFT END / amber RIGHT END, live clock). **Add test cameras** on
+  the status page (or `/api/test-cameras?on=1`) puts one at the bottom of each camera scene;
+  **Remove test cameras** (`?on=0`) takes them out again.

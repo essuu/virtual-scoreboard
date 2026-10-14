@@ -54,3 +54,11 @@ Scene names in the URL must match OBS exactly; a space is written `%20`.
 5. From then on the cameras swap each over and the board appears after each wicket by themselves.
 6. At the end of the innings the board comes up and stays. When the second innings starts,
    press **Left end** or **Right end** again.
+
+## Trying it at home (no cameras)
+
+On the status page press **Add test cameras**. Each camera scene gets a test card under the score
+bar: blue **LEFT END** (Caxton) or amber **RIGHT END** (Smallhythe), with a running clock so you
+can see it's live. Press the Stream Deck keys and watch which card goes on air. Score changes come
+from the controller as normal, or replay a capture with `test_replay.bat`. **Remove test cameras**
+takes them out again before match day (they'd sit hidden under the real camera otherwise).

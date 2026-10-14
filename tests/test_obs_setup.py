@@ -107,3 +107,36 @@ def test_auto_setup_off():
     d.auto_setup = False
     d.on_obs_connect()
     assert obs.names("Camera Left") == [] and BAR_INPUT not in obs.inputs
+
+
+def test_test_cameras_added_under_the_bar_and_removed():
+    obs = ModelOBS(["Camera Left", "Camera Right", "Full Board"])
+    obs.add_source("Camera Right", "IP cam Smallhythe")
+    d = director(obs)
+    d.on_obs_connect()
+    d.test_cameras(True)
+    assert obs.names("Camera Left") == ["Test Camera Left", OVERLAY_SCENE]
+    assert obs.names("Camera Right") == ["Test Camera Right", "IP cam Smallhythe", OVERLAY_SCENE]
+    assert obs.inputs["Test Camera Left"]["settings"]["url"] == "http://127.0.0.1:8765/testcard?end=left"
+    assert obs.inputs["Test Camera Right"]["settings"]["url"].endswith("end=right")
+    assert d.test_cameras(True) == []                       # nothing doubled
+    assert obs.names("Camera Left") == ["Test Camera Left", OVERLAY_SCENE]
+    d.test_cameras(False)
+    assert obs.names("Camera Left") == [OVERLAY_SCENE]
+    assert obs.names("Camera Right") == ["IP cam Smallhythe", OVERLAY_SCENE]
+    assert "Test Camera Left" not in obs.inputs
+
+
+def test_test_cameras_on_a_blank_obs():
+    obs = ModelOBS(["Scene"])
+    d = director(obs)
+    d.test_cameras(True)
+    assert obs.names("Camera Left") == ["Test Camera Left", OVERLAY_SCENE]
+    assert obs.names("Full Board") == [BOARD_INPUT]
+
+
+def test_remove_leaves_a_source_of_the_same_name_that_is_not_ours():
+    obs = ModelOBS(["Camera Left"])
+    obs.add_source("Camera Left", "Test Camera Left", "browser_source", {"url": "https://example.com/"})
+    director(obs).test_cameras(False)
+    assert obs.names("Camera Left") == ["Test Camera Left"]

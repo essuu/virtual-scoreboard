@@ -182,6 +182,32 @@ class Director:
         self.refresh_scenes()
         return done
 
+    def test_cameras(self, on=True):
+        """Add (or remove) stand-in test cards in the camera scenes, for trying things out at home."""
+        if not self._obs_ok():
+            self.setup_error = "OBS not connected"
+            return []
+        try:
+            st = obs_setup.Setup(self.obs, self.port)
+            if on:
+                done = st.add_test_cards({LEFT: self.scenes[LEFT], RIGHT: self.scenes[RIGHT]},
+                                         lambda end: "http://127.0.0.1:%d/testcard?end=%s" % (self.port, end))
+                if self.auto_setup:
+                    done += st.run([self.scenes[LEFT], self.scenes[RIGHT]], self.scenes["board"],
+                                   self.page_url(self.bar_query), self.page_url(self.board_query))
+            else:
+                done = st.remove_test_cards()
+            self.setup_error = ""
+        except Exception as e:
+            self.setup_error = str(e)
+            self.log("Director: test cameras failed: %s" % e)
+            return []
+        self.setup_done = done or ["test cameras already %s" % ("in place" if on else "removed")]
+        for d in done:
+            self._note("Test cameras: " + d)
+        self.refresh_scenes()
+        return done
+
     def on_obs_connect(self):
         if self.auto_setup:
             self.setup_obs()
