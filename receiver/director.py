@@ -68,6 +68,7 @@ class Director:
         self.port = 8765
         self.bar_query = ""
         self.board_query = "layout=classicboard&bg=1"
+        self.break_scenes = True        # create Starting Soon / Break / Technical Difficulties
         self.setup_done = []            # what the last set-up changed
         self.setup_error = ""
         self.history = []               # recent decisions for the status page
@@ -161,16 +162,25 @@ class Director:
     def page_url(self, query):
         return "http://127.0.0.1:%d/%s" % (self.port, ("?" + query) if query else "")
 
+    def break_url(self, kind):
+        """The break card for one of the break scenes, with the score bar's options (title, team
+        names) passed on so they match."""
+        extra = "&".join(p for p in self.bar_query.split("&") if p.split("=")[0] in ("title", "home", "away"))
+        return "http://127.0.0.1:%d/break?kind=%s%s" % (self.port, kind, ("&" + extra) if extra else "")
+
+    def _run_setup(self, st):
+        return st.run([self.scenes[LEFT], self.scenes[RIGHT]], self.scenes["board"],
+                      self.page_url(self.bar_query), self.page_url(self.board_query),
+                      self.break_url if self.break_scenes else None)
+
     def setup_obs(self):
-        """Add the score bar to the camera scenes and the scoreboard to the board scene (only what's
-        missing). Returns the list of changes."""
+        """Add the score bar to the camera scenes, the scoreboard to the board scene and the break
+        scenes with their cards (only what's missing). Returns the list of changes."""
         if not self._obs_ok():
             self.setup_error = "OBS not connected"
             return []
         try:
-            done = obs_setup.Setup(self.obs, self.port).run(
-                [self.scenes[LEFT], self.scenes[RIGHT]], self.scenes["board"],
-                self.page_url(self.bar_query), self.page_url(self.board_query))
+            done = self._run_setup(obs_setup.Setup(self.obs, self.port))
             self.setup_error = ""
         except Exception as e:
             self.setup_error = str(e)
@@ -193,8 +203,7 @@ class Director:
                 done = st.add_test_cards({LEFT: self.scenes[LEFT], RIGHT: self.scenes[RIGHT]},
                                          lambda end: "http://127.0.0.1:%d/testcard?end=%s" % (self.port, end))
                 if self.auto_setup:
-                    done += st.run([self.scenes[LEFT], self.scenes[RIGHT]], self.scenes["board"],
-                                   self.page_url(self.bar_query), self.page_url(self.board_query))
+                    done += self._run_setup(st)
             else:
                 done = st.remove_test_cards()
             self.setup_error = ""

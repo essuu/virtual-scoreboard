@@ -140,3 +140,43 @@ def test_remove_leaves_a_source_of_the_same_name_that_is_not_ours():
     obs.add_source("Camera Left", "Test Camera Left", "browser_source", {"url": "https://example.com/"})
     director(obs).test_cameras(False)
     assert obs.names("Camera Left") == ["Test Camera Left"]
+
+
+# ---------------------------------------------------------------- break scenes
+from obs_setup import BREAK_SCENES
+
+
+def test_break_scenes_created_with_cards():
+    obs = ModelOBS(["Camera Left", "Camera Right"])
+    d = director(obs)
+    d.bar_query = "title=Tenterden%20CC&home=Tenterden&scale=0.8"
+    done = d.setup_obs()
+    for scene, (kind, name) in BREAK_SCENES.items():
+        assert obs.names(scene) == [name]
+        url = obs.inputs[name]["settings"]["url"]
+        assert url.startswith("http://127.0.0.1:8765/break?kind=%s" % kind)
+        assert "title=Tenterden%20CC" in url and "home=Tenterden" in url and "scale" not in url
+        assert any(scene in x for x in done)
+    # the break pages are not mistaken for the score bar or board
+    assert obs.names("Full Board") == [BOARD_INPUT]
+    before = {k: list(v) for k, v in obs.scenes.items()}
+    assert d.setup_obs() == []
+    assert {k: list(v) for k, v in obs.scenes.items()} == before
+
+
+def test_own_break_picture_left_alone():
+    obs = ModelOBS(["Camera Left", "Camera Right", "Break", "Starting Soon"])
+    obs.add_source("Break", "My tea picture", "image_source", {"file": "tea.png"})
+    d = director(obs)
+    d.setup_obs()
+    assert obs.names("Break") == ["My tea picture"]                      # untouched
+    assert obs.names("Starting Soon") == ["Starting Soon Card"]          # existed but empty: filled
+    assert obs.names("Technical Difficulties") == ["Technical Difficulties Card"]
+
+
+def test_break_scenes_can_be_turned_off():
+    obs = ModelOBS(["Camera Left", "Camera Right"])
+    d = director(obs)
+    d.break_scenes = False
+    d.setup_obs()
+    assert not any(s in obs.scenes for s in BREAK_SCENES)

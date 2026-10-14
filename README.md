@@ -74,6 +74,12 @@ as the over starts. Pressing it at any later point also corrects the ends.
      change. If you add a camera feed to a camera scene later, the bar is moved back on top of it.
    - a **Full Board** scene with the full scoreboard (`?layout=classicboard&bg=1`).
    - any of these three scenes that don't exist yet.
+   - **Starting Soon**, **Break** and **Technical Difficulties** scenes for the Stream Deck's
+     Breaks keys, each with a full-screen holding picture in the scoreboard's colours
+     (`/break?kind=soon|break|technical`). The Break picture shows the live score once the innings
+     is under way; Starting Soon shows the time. The title and team names come from
+     `--bar-options`. If one of these scenes already has something in it (your own picture),
+     it's left alone. `--no-break-scenes` turns this off.
 
    It never removes or edits anything, and a scene that already shows a page from the receiver
    (directly or in a nested scene) is left alone, so it's safe if you've set things up by hand.
@@ -130,6 +136,7 @@ Add these after `python ecs_receiver.py` in `start_receiver.bat`.
 | `--bar-options "title=…"` | options for the score bar the receiver adds to the camera scenes |
 | `--board-options "layout=…"` | options for the Full Board scene's scoreboard (default `layout=classicboard&bg=1`) |
 | `--no-obs-setup` | don't add the score bar / scoreboard to the OBS scenes |
+| `--no-break-scenes` | don't create the Starting Soon / Break / Technical Difficulties scenes |
 | `--record test.cu8` | also save the raw radio signal, for troubleshooting |
 | `--iq FILE.cu8` | decode a saved radio recording instead of the live radio |
 | `--sr FILE.sr --realtime` | replay a PulseView logic capture (no radio needed) |
@@ -154,7 +161,8 @@ Run `python ecs_receiver.py --help` for the full list.
 | `/api/board`, `/api/board?hold=1` | full board for 10 s, or until another key |
 | `/api/live` | back to the bowling-end camera |
 | `/api/scene?name=Break` | cut to any scene |
-| `/api/setup-obs` | add the score bar to the camera scenes and the scoreboard to Full Board (only what's missing) |
+| `/api/setup-obs` | add the score bar to the camera scenes, the scoreboard to Full Board and the break scenes (only what's missing) |
+| `/break?kind=soon\|break\|technical` | full-screen break picture; options `&title=`, `&home=`, `&away=`, `&label=` (heading), `&msg=` (line under it), `&start=13:00` (Starting Soon) |
 
 The `/api/` commands work with GET (Stream Deck *Website* action, "GET request in background")
 or POST.

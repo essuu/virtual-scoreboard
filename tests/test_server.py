@@ -25,7 +25,7 @@ def get(url):
 
 
 def test_pages(server):
-    for path in ("/", "/?layout=classicboard", "/status", "/testcard?end=right"):
+    for path in ("/", "/?layout=classicboard", "/status", "/testcard?end=right", "/break?kind=break"):
         status, body = get(server + path)
         assert status == 200 and "<html" in body.lower()
 

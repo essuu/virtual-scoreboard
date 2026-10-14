@@ -46,3 +46,9 @@ First public release.
   labelled stand-in picture (blue LEFT END / amber RIGHT END, live clock). **Add test cameras** on
   the status page (or `/api/test-cameras?on=1`) puts one at the bottom of each camera scene;
   **Remove test cameras** (`?on=0`) takes them out again.
+- Break scenes: the OBS set-up also creates **Starting Soon**, **Break** and **Technical
+  Difficulties** (the names the Stream Deck's Breaks keys use), each with a full-screen picture in
+  the scoreboard's colours (`/break?kind=soon|break|technical`). Break shows the live score;
+  Starting Soon shows the time and, with `&start=`, the start time. Title and team names follow
+  `--bar-options`; `&label=` and `&msg=` change the wording. A break scene that already has
+  something in it is left alone. `--no-break-scenes` turns this off.

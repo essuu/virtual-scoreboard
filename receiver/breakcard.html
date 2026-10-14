@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Break Card</title>
+<!--
+  Full-screen holding pictures for the break scenes, in the scoreboard's colours.
+    /break?kind=soon        STARTING SOON           (live clock; &start=13:00 adds "First ball 13:00")
+    /break?kind=break       BREAK                   (live score while the innings is under way)
+    /break?kind=technical   TECHNICAL DIFFICULTIES
+  Options:
+    &title=Tenterden%20CC   club / match name in the gold tag at the top
+    &home= &away=           names for the batting side (as on the scoreboard)
+    &label=TEA              replace the big heading
+    &msg=Back%20at%204pm    replace the line under it
+  The OBS set-up adds these to the "Starting Soon", "Break" and "Technical Difficulties" scenes,
+  passing on --bar-options (so the title and team names match the score bar).
+-->
+<style>
+  :root {
+    --ink: #f4f1e8;
+    --muted: #b9c4bd;
+    --panel: #0f2a22;
+    --panel-2: #163a2f;
+    --deep: #081a15;
+    --line: rgba(255,255,255,.10);
+    --accent: #e8b84a;
+    --accent-ink: #1b1405;
+    --font: "Bahnschrift", "DIN Alternate", "Roboto Condensed", "Segoe UI", system-ui, sans-serif;
+  }
+  html, body { margin: 0; height: 100%; overflow: hidden; }
+  body {
+    font-family: var(--font); color: var(--ink); font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
+    /* mown-outfield stripes under a dark vignette */
+    background:
+      radial-gradient(ellipse at 50% 45%, rgba(8,26,21,.15), rgba(8,26,21,.92) 75%),
+      repeating-linear-gradient(90deg, #12322a 0 12.5%, #0e2a22 12.5% 25%);
+    display: flex; align-items: center; justify-content: center;
+    font-size: min(1.6vw, 2.85vh);          /* everything scales with the source size */
+  }
+  .card { display: flex; flex-direction: column; align-items: center; text-align: center; width: 100%; }
+
+  .tag { background: var(--accent); color: var(--accent-ink); font-weight: 700; font-size: 1.9em;
+         letter-spacing: .06em; text-transform: uppercase; padding: .28em .9em; border-radius: .3em;
+         box-shadow: 0 .4em 1.4em rgba(0,0,0,.4); margin-bottom: 1.6em; }
+  .tag:empty { display: none; }
+
+  .head { font-size: 7.2em; font-weight: 700; line-height: .95; letter-spacing: .02em;
+          text-transform: uppercase; text-shadow: 0 .05em .25em rgba(0,0,0,.5); max-width: 92vw; }
+  body.soon .head { font-size: 5.8em; white-space: nowrap; }
+  body.technical .head { font-size: 5.6em; text-wrap: balance; }
+
+  /* gold rule with a slow shimmer, so the picture is visibly live */
+  .rule { position: relative; width: 22em; height: .28em; margin: 1.5em 0 1.3em; border-radius: .14em;
+          background: var(--accent); overflow: hidden; }
+  .rule::after { content: ""; position: absolute; top: 0; bottom: 0; width: 30%;
+                 background: linear-gradient(90deg, transparent, rgba(255,255,255,.75), transparent);
+                 animation: sweep 4s ease-in-out infinite; }
+  @keyframes sweep { from { left: -35%; } to { left: 105%; } }
+
+  .msg { font-size: 2.6em; color: var(--muted); letter-spacing: .03em; }
+  .msg:empty { display: none; }
+
+  /* score / clock strip, styled like the score bar */
+  .strip { display: flex; align-items: stretch; margin-top: 2.4em; border-radius: .6em; overflow: hidden;
+           box-shadow: 0 .6em 1.8em rgba(0,0,0,.45); }
+  .strip.hidden, .cell.hidden { display: none; }
+  .cell { display: flex; align-items: center; gap: .7em; padding: .55em 1.3em; background: var(--panel);
+          border-left: 1px solid var(--line); white-space: nowrap; }
+  .cell:first-child { border-left: 0; }
+  .cell.hi { background: var(--panel-2); }
+  .lbl { font-size: 1.05em; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+  .val { font-size: 2.4em; font-weight: 600; }
+  .big { font-size: 3.4em; font-weight: 700; line-height: 1; }
+  .big .sep { color: var(--muted); margin: 0 .06em; }
+  .side { color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; font-size: 2em; }
+
+  /* technical: three dots pulsing in turn */
+  .dots { display: none; gap: .9em; margin-top: 2.6em; }
+  body.technical .dots { display: flex; }
+  .dots i { width: 1.2em; height: 1.2em; border-radius: 50%; background: var(--accent);
+            animation: pulse 1.5s ease-in-out infinite; }
+  .dots i:nth-child(2) { animation-delay: .25s; } .dots i:nth-child(3) { animation-delay: .5s; }
+  @keyframes pulse { 0%, 100% { opacity: .2; transform: scale(.75); } 40% { opacity: 1; transform: scale(1); } }
+</style>
+</head>
+<body class="soon">
+  <div class="card">
+    <div class="tag" id="tag"></div>
+    <div class="head" id="head"></div>
+    <div class="rule"></div>
+    <div class="msg" id="msg"></div>
+
+    <!-- starting soon: the time now, and the start time if given -->
+    <div class="strip hidden" id="clock-strip">
+      <div class="cell"><span class="lbl">Time</span><span class="val num" id="clock">--:--</span></div>
+      <div class="cell hi hidden" id="start-cell"><span class="lbl">First ball</span><span class="val num" id="start"></span></div>
+    </div>
+
+    <!-- break: the score so far -->
+    <div class="strip hidden" id="score-strip">
+      <div class="cell hidden" id="side-cell"><span class="lbl">Batting</span><span class="side" id="side"></span></div>
+      <div class="cell hi"><span class="big num"><span id="total">0</span><span class="sep">-</span><span id="wickets">0</span></span></div>
+      <div class="cell"><span class="lbl">Overs</span><span class="val num" id="overs">0</span></div>
+      <div class="cell hidden" id="first-cell"><span class="lbl">1st inns</span><span class="val num" id="first"></span></div>
+    </div>
+
+    <div class="dots"><i></i><i></i><i></i></div>
+  </div>
+<script>
+(function () {
+  const q = new URLSearchParams(location.search);
+  const k = (q.get("kind") || "soon").toLowerCase();
+  const kind = k.startsWith("t") ? "technical" : k.startsWith("b") ? "break" : "soon";
+  const text = {
+    soon:      ["Starting soon", "Play will begin shortly", "Starting Soon"],
+    break:     ["Break", "Play will resume shortly", "Break"],
+    technical: ["Technical difficulties", "We’ll be back as soon as we can", "Technical Difficulties"],
+  }[kind];
+  document.body.className = kind;
+  document.title = text[2];
+  const $ = id => document.getElementById(id);
+  $("tag").textContent = q.get("title") || "";
+  $("head").textContent = q.get("label") || text[0];
+  $("msg").textContent = q.has("msg") ? q.get("msg") : text[1];
+
+  if (kind === "soon") {
+    $("clock-strip").classList.remove("hidden");
+    if (q.get("start")) { $("start").textContent = q.get("start"); $("start-cell").classList.remove("hidden"); }
+    const pad = n => String(n).padStart(2, "0");
+    const tick = () => { const d = new Date(); $("clock").textContent = pad(d.getHours()) + ":" + pad(d.getMinutes()); };
+    tick(); setInterval(tick, 1000);
+    return;
+  }
+  if (kind !== "break") return;
+
+  // break: show the score once the innings is under way, updated live like the scoreboard
+  const names = { home: q.get("home") || "Home", away: q.get("away") || "Away" };
+  const v = (s, f) => ((s.values || {})[f] || "").trim();
+  function render(s) {
+    const total = v(s, "total"), wkts = v(s, "wickets"), overs = v(s, "overs"), first = v(s, "first_inns");
+    $("score-strip").classList.toggle("hidden", !(total || wkts || overs));
+    $("total").textContent = total || "0";
+    $("wickets").textContent = wkts || "0";
+    $("overs").textContent = overs || "0";
+    $("first").textContent = first;
+    $("first-cell").classList.toggle("hidden", !first);
+    const side = (s.match && s.match.batting) || "";
+    $("side").textContent = side ? names[side] : "";
+    $("side-cell").classList.toggle("hidden", !side);
+  }
+  const poll = () => fetch("/state", { cache: "no-store" }).then(r => r.json()).then(render).catch(() => {});
+  function connect() {
+    const es = new EventSource("/events");
+    es.onmessage = e => { try { render(JSON.parse(e.data)); } catch (_) {} };
+    es.onerror = () => { es.close(); setTimeout(connect, 3000); };
+  }
+  poll(); connect(); setInterval(poll, 10000);
+})();
+</script>
+</body>
+</html>

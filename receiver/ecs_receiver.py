@@ -433,8 +433,9 @@ class Handler(BaseHTTPRequestHandler):
         if path in ("/", "/scoreboard", "/index.html"):
             with open(os.path.join(HERE, "scoreboard.html"), "rb") as f:
                 return self._send(200, f.read(), "text/html; charset=utf-8")
-        if path == "/testcard":
-            with open(os.path.join(HERE, "testcard.html"), "rb") as f:
+        if path in ("/testcard", "/break"):
+            page = "testcard.html" if path == "/testcard" else "breakcard.html"
+            with open(os.path.join(HERE, page), "rb") as f:
                 return self._send(200, f.read(), "text/html; charset=utf-8")
         if path == "/status":
             with open(os.path.join(HERE, "status.html"), "rb") as f:
@@ -512,6 +513,8 @@ def main():
     g.add_argument("--board-seconds", type=float, default=10, help="how long the board stays up after a wicket (default 10)")
     g.add_argument("--no-obs-setup", action="store_true",
                    help="don't add the score bar / scoreboard to the OBS scenes automatically")
+    g.add_argument("--no-break-scenes", action="store_true",
+                   help='don\'t create the "Starting Soon", "Break" and "Technical Difficulties" scenes')
     g.add_argument("--bar-options", default="",
                    help='extra options for the score bar on the cameras, e.g. "title=Tenterden%%20CC&home=Tenterden"')
     g.add_argument("--board-options", default="layout=classicboard&bg=1",
@@ -524,6 +527,7 @@ def main():
     DIRECTOR.scenes.update({"left": args.scene_left, "right": args.scene_right, "board": args.scene_board})
     DIRECTOR.board_seconds = args.board_seconds
     DIRECTOR.auto_setup = not args.no_obs_setup
+    DIRECTOR.break_scenes = not args.no_break_scenes
     DIRECTOR.port = args.port
     DIRECTOR.bar_query = args.bar_options.lstrip("?&")
     DIRECTOR.board_query = args.board_options.lstrip("?&")

@@ -50,7 +50,9 @@ Stream Deck puts its own *back* key in the top-left of a folder.
 | *(back)* | **Starting soon** `starting_soon.png`<br>`http://127.0.0.1:8765/api/scene?name=Starting%20Soon` | **Drinks / tea** `break_scene.png`<br>`http://127.0.0.1:8765/api/scene?name=Break` |
 | **Technical** `technical.png`<br>`http://127.0.0.1:8765/api/scene?name=Technical%20Difficulties` | **Board (hold)** `board.png`<br>`http://127.0.0.1:8765/api/board?hold=1` | **Live** `live.png`<br>`http://127.0.0.1:8765/api/live` |
 
-Scene names in the URL must match OBS exactly; a space is written `%20`.
+Scene names in the URL must match OBS exactly; a space is written `%20`. The receiver's OBS
+set-up creates these three scenes, each with a holding picture in the scoreboard's style (see the
+main README); put your own picture in one instead and it's left alone.
 
 ## What each key does
 

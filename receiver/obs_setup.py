@@ -2,6 +2,9 @@
 
     Camera Left / Camera Right   score bar on top of the camera picture
     Full Board                   the full scoreboard (classicboard layout)
+    Starting Soon / Break /      a holding picture (/break?kind=...) in the scoreboard's colours, for
+    Technical Difficulties       the Stream Deck's Breaks keys. Only put into a scene that is empty,
+                                 so your own picture in one of these scenes is left alone.
 
 The score bar lives in one browser source ("Score Bar") inside its own scene ("Score Overlay"),
 which is added to both camera scenes. One browser instance means one connection to the receiver,
@@ -16,6 +19,10 @@ from urllib.parse import urlsplit, parse_qs
 OVERLAY_SCENE = "Score Overlay"
 BAR_INPUT = "Score Bar"
 BOARD_INPUT = "Full Scoreboard"
+# break scenes the Stream Deck's Breaks keys cut to: scene -> (card kind, browser source name)
+BREAK_SCENES = {"Starting Soon": ("soon", "Starting Soon Card"),
+                "Break": ("break", "Break Card"),
+                "Technical Difficulties": ("technical", "Technical Difficulties Card")}
 TEST_INPUTS = {"left": "Test Camera Left", "right": "Test Camera Right"}
 SCENE_TYPE = "OBS_SOURCE_TYPE_SCENE"
 LOCAL_HOSTS = ("127.0.0.1", "localhost", "::1", "[::1]")
@@ -93,8 +100,9 @@ class Setup:
             return True
         return False
 
-    def run(self, cameras, board_scene, bar_url, board_url):
-        """Returns a list of what changed (empty if OBS was already set up)."""
+    def run(self, cameras, board_scene, bar_url, board_url, break_url=None):
+        """Returns a list of what changed (empty if OBS was already set up).
+        break_url(kind) -> URL of that break card; None leaves the break scenes out."""
         done = []
         vs = self.req("GetVideoSettings")
         size = (int(vs.get("baseWidth") or 1920), int(vs.get("baseHeight") or 1080))
@@ -130,6 +138,17 @@ class Setup:
         if not self.find(board_scene, board=True):
             self.add_browser(board_scene, BOARD_INPUT, board_url, size, existing)
             done.append('added the full scoreboard to "%s"' % board_scene)
+
+        # break scenes: create any that are missing; put our card only into an empty one
+        if break_url:
+            for scene, (kind, input_name) in BREAK_SCENES.items():
+                if scene not in scenes:
+                    self.req("CreateScene", {"sceneName": scene})
+                    scenes.add(scene)
+                    done.append('created scene "%s"' % scene)
+                if not self.items(scene):
+                    self.add_browser(scene, input_name, break_url(kind), size, existing)
+                    done.append('added the %s card to "%s"' % (scene.lower(), scene))
         return done
 
     def keep_on_top(self, scene):
