@@ -20,12 +20,12 @@ def bar_on_top(obs, scene):
 
 def test_fresh_obs_with_camera_scenes():
     obs = ModelOBS(["Camera Left", "Camera Right"], canvas=(1280, 720))
-    obs.add_source("Camera Left", "IP cam Caxton")
-    obs.add_source("Camera Right", "IP cam Smallhythe")
+    obs.add_source("Camera Left", "IP cam left")
+    obs.add_source("Camera Right", "IP cam right")
     d = director(obs)
     d.on_obs_connect()
     assert bar_on_top(obs, "Camera Left") and bar_on_top(obs, "Camera Right")
-    assert obs.names("Camera Left") == ["IP cam Caxton", OVERLAY_SCENE]
+    assert obs.names("Camera Left") == ["IP cam left", OVERLAY_SCENE]
     bar = obs.inputs[BAR_INPUT]["settings"]
     assert bar["url"] == BAR and (bar["width"], bar["height"]) == (1280, 720)
     assert bar["shutdown"] is False and bar["restart_when_active"] is False
