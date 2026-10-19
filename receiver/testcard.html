@@ -19,7 +19,9 @@
     background: radial-gradient(ellipse at 50% 40%, var(--bg2), var(--bg1) 70%);
     color: var(--ink); font-family: "Segoe UI", Arial, sans-serif;
     display:flex; flex-direction:column; align-items:center; justify-content:center;
-    font-size: min(2.2vw, 3.9vh);           /* everything scales with the source size */
+    font-size: min(2.2vw, 3vh);             /* everything scales with the source size */
+    /* keep clear of the score bar, which takes about the bottom fifth of the picture */
+    box-sizing: border-box; padding-bottom: 25vh;
   }
   .tag { letter-spacing:.4em; font-size:1.2em; opacity:.75; text-transform:uppercase; }
   .big { font-size:6.5em; font-weight:800; line-height:1; margin:.15em 0; color:var(--accent);

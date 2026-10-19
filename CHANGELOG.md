@@ -10,6 +10,8 @@ First public release.
 - The score bar shows all its fields from the start (batting side, both batters, extras, last
   man, 1st inns), with a dash for anything not yet set, like the full scoreboard. It no longer
   grows as the innings fills in, and the strip always lines up with the main row.
+- Test camera pictures keep their label, clock and pitch strip in the top three-quarters, clear
+  of the bigger score bar.
 - RTL-SDR receiver for the ECS controller's 433.92 MHz link. It finds the carrier automatically
   within ±300 kHz.
 - OBS scoreboard page with four layouts (bar, board, classic, classicboard) and a status page.
