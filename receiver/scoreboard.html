@@ -64,6 +64,7 @@
   body.stacked .bar-sub .lbl { font-size: 11px; }
   body.stacked .bar-sub .val { font-size: 21px; }
   body.stacked .bar-sub.empty { display: none; }
+  body.stacked .bar-main .cell { flex-grow: 1; justify-content: center; }   /* when stretched to the strip */
   .title { background: var(--accent); color: var(--accent-ink); font-weight: 700;
            font-size: 22px; letter-spacing: .04em; text-transform: uppercase; }
   .title:empty { display: none; }
@@ -205,7 +206,8 @@
       <div class="cell side-cell" style="--o:2"><span class="lbl">Batting</span><span class="val" data-side-name></span></div>
       <div class="cell small" style="--o:7"><span class="lbl">Extras</span><span class="val num" data-f="extras"></span></div>
       <div class="cell small" style="--o:8"><span class="lbl">Last man</span><span class="val num" data-f="last_bat"></span></div>
-      <div class="cell small" style="--o:9"><span class="lbl">1st inns</span><span class="val num" data-f="first_inns"></span></div>
+      <div class="cell small" style="--o:9"><span class="lbl">Last wkt</span><span class="val num" data-f="last_wkt_total"></span></div>
+      <div class="cell small" style="--o:10"><span class="lbl">1st inns</span><span class="val num" data-f="first_inns"></span></div>
     </div>
     <div class="bar-main">
       <div class="cell title" data-text="title" style="--o:1"></div>
@@ -306,6 +308,12 @@
   const stacked = !panelId && (q.has("stack") ? q.get("stack") !== "0" : userScale >= 1.5);
   document.body.classList.toggle("stacked", stacked);
   function tidyBar() {
+    // two tiers: the main row is never narrower than the strip above it
+    if (stacked) {
+      const main = document.querySelector(".bar-main"), sub = document.querySelector(".bar-sub");
+      main.style.minWidth = "";
+      main.style.minWidth = (sub.offsetWidth + parseFloat(getComputedStyle(sub).marginLeft || 0) + 10) + "px";
+    }
     // the first visible cell in each row has no divider; hide the strip when it has nothing in it
     const rows = stacked ? [".bar-sub", ".bar-main"] : [".bar"];
     document.querySelectorAll(".bar .cell").forEach(c => c.classList.remove("first"));

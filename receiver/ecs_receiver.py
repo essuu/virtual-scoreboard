@@ -510,7 +510,7 @@ def main():
     g.add_argument("--scene-left", default="Camera Left", help='scene for the left-end camera (default "Camera Left")')
     g.add_argument("--scene-right", default="Camera Right", help='scene for the right-end camera (default "Camera Right")')
     g.add_argument("--scene-board", default="Full Board", help='full-scoreboard scene (default "Full Board")')
-    g.add_argument("--board-seconds", type=float, default=10, help="how long the board stays up after a wicket (default 10)")
+    g.add_argument("--board-seconds", type=float, default=6, help="how long the board stays up after a wicket (default 6)")
     g.add_argument("--no-obs-setup", action="store_true",
                    help="don't add the score bar / scoreboard to the OBS scenes automatically")
     g.add_argument("--no-break-scenes", action="store_true",

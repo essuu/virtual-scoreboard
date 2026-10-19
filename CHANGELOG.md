@@ -12,6 +12,9 @@ First public release.
   grows as the innings fills in, and the strip always lines up with the main row.
 - Test camera pictures keep their label, clock and pitch strip in the top three-quarters, clear
   of the bigger score bar.
+- The score bar shows the total at the last wicket ("Last wkt") after "Last man".
+- The full board now stays up for 6 seconds after a wicket (was 10); `--board-seconds` still
+  changes it.
 - RTL-SDR receiver for the ECS controller's 433.92 MHz link. It finds the carrier automatically
   within ±300 kHz.
 - OBS scoreboard page with four layouts (bar, board, classic, classicboard) and a status page.

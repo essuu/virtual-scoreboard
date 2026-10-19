@@ -40,7 +40,7 @@ def num(v):
 
 class Director:
     def __init__(self, obs=None, scene_left="Camera Left", scene_right="Camera Right",
-                 scene_board="Full Board", board_seconds=10.0, state_file=None,
+                 scene_board="Full Board", board_seconds=6.0, state_file=None,
                  clock=time.monotonic, log=None):
         self.lock = threading.RLock()
         self.obs = obs

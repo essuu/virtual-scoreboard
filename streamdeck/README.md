@@ -59,7 +59,7 @@ main README); put your own picture in one instead and it's left alone.
 | Key | Effect |
 |---|---|
 | Left / Right end bowling | "This end is bowling **now**." Cuts to that camera and sets the ends for the rest of the innings. Press it before the first ball of each innings. Pressing it later also corrects the ends if they've got out of step. |
-| Board | Full-board scene for 10 s (`--board-seconds`), then back to the bowling-end camera. |
+| Board | Full-board scene for 6 s (`--board-seconds`), then back to the bowling-end camera. |
 | Board (hold) | Full-board scene until you press another key. |
 | Live | Back to the bowling-end camera (after a break, or after a manual cut). |
 | Home / Away bat first | Sets who batted first; the scoreboard shows "Home batting" or "Away batting" and swaps it automatically in the second innings. |

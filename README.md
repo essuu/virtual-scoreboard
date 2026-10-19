@@ -49,7 +49,7 @@ of an innings.)
 With a camera on each sightscreen, the receiver can drive OBS like PCS Pro does for NV Play:
 
 - **Each over**, it cuts to the camera at the new bowling end (behind the bowler).
-- **At a wicket**, it shows the full-board scene for 10 seconds, then cuts back to the bowling-end
+- **At a wicket**, it shows the full-board scene for 6 seconds, then cuts back to the bowling-end
   camera (the new end, if the over finished on that ball).
 - **At the end of an innings**, it shows the board and holds it until you say which end is
   bowling the first over of the next innings.
@@ -133,7 +133,7 @@ Add these after `python ecs_receiver.py` in `start_receiver.bat`.
 | `--obs-password X` | OBS WebSocket password (or set `OBS_PASSWORD`) |
 | `--no-obs` | don't connect to OBS |
 | `--scene-left NAME` etc. | OBS scene names (`--scene-left`, `--scene-right`, `--scene-board`) |
-| `--board-seconds 10` | how long the board stays up after a wicket |
+| `--board-seconds 6` | how long the board stays up after a wicket |
 | `--bar-options "title=…"` | options for the score bar the receiver adds to the camera scenes |
 | `--board-options "layout=…"` | options for the Full Board scene's scoreboard (default `layout=classicboard&bg=1`) |
 | `--no-obs-setup` | don't add the score bar / scoreboard to the OBS scenes |
@@ -159,7 +159,7 @@ Run `python ecs_receiver.py --help` for the full list.
 | `/api/swap` | swap the ends |
 | `/api/home-first`, `/api/away-first` | who batted first |
 | `/api/auto?on=1` / `0` / `toggle` | automatic switching on or off |
-| `/api/board`, `/api/board?hold=1` | full board for 10 s, or until another key |
+| `/api/board`, `/api/board?hold=1` | full board for 6 s, or until another key |
 | `/api/live` | back to the bowling-end camera |
 | `/api/scene?name=Break` | cut to any scene |
 | `/api/setup-obs` | add the score bar to the camera scenes, the scoreboard to Full Board and the break scenes (only what's missing) |
