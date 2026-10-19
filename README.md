@@ -110,7 +110,8 @@ innings. On `classicboard` it reads BATTING – HOME in the top bar, after the u
 | `?layout=classicboard` | full-board tiles, arranged like the ground scoreboard, with the umpire light beside the title |
 | `&title=Home%20CC` | text in the title cell (hidden if not set) |
 | `&home=Tenterden&away=Visitors` | names shown for the batting side (default Home / Away) |
-| `&scale=0.6` | board layouts fill the window (or OBS browser source) and re-fit when it's resized; `&scale` makes them a fraction of that. On the score bar it's a plain zoom |
+| `&scale=0.6` | board layouts fill the window (or OBS browser source) and re-fit when it's resized; `&scale` makes them a fraction of that. On the score bar it's a plain zoom: the default is 2 (twice the original size, easy to read over the camera picture); `&scale=1` gives the original smaller bar |
+| `&stack=0` | score bar: when enlarged (from `&scale=1.5`, so by default) the main numbers sit on one big row with batting side / extras / last man / 1st inns in a slim strip above, so it still fits across the picture. `&stack=0` keeps everything on one row (it then shrinks to fit); `&stack=1` always uses two tiers |
 | `&fit=0` | board layouts: keep their natural size (with `&scale` as a zoom) instead of filling the window. They still shrink if they wouldn't fit |
 | `&pos=top` | score bar at the top of the screen |
 | `&bg=1` | solid background (handy for previewing in a browser) |

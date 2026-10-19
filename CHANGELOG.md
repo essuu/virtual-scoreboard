@@ -4,6 +4,9 @@
 
 First public release.
 
+- Score bar is twice as big by default, for reading over the camera picture. Batting side,
+  extras, last man and 1st inns move to a slim strip above the main row so it still fits;
+  `&scale=1` brings back the original size, `&stack=0` keeps it on one row.
 - RTL-SDR receiver for the ECS controller's 433.92 MHz link. It finds the carrier automatically
   within ±300 kHz.
 - OBS scoreboard page with four layouts (bar, board, classic, classicboard) and a status page.

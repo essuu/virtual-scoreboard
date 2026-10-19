@@ -12,7 +12,9 @@
     ?layout=classicboard     full-board tile style, arranged like the ground scoreboard
     &title=Home%20CC         text shown in the title cell
     &scale=0.6               board layouts: size as a fraction of the window (default 1 = fill it)
-                             bar: make it bigger/smaller
+                             bar: zoom (default 2; &scale=1 is the original, smaller bar)
+    &stack=0                 bar: keep it on one row even when enlarged (it is two-tier from
+                             &scale=1.5 up, so it still fits across the picture; &stack=1 forces it)
     &fit=0                   board layouts: natural size with &scale as a plain zoom, only
                              shrinking if it wouldn't fit the window
     &home=Tenterden          name shown when the home side is batting (default "Home")
@@ -47,7 +49,21 @@
   body.top .bar { bottom: auto; top: 40px; transform-origin: top center; }
   .cell { display: flex; align-items: center; gap: 12px; padding: 0 20px;
           background: var(--panel); border-left: 1px solid var(--line); white-space: nowrap; }
-  .cell:first-child { border-left: 0; }
+  .bar-sub, .bar-main { display: contents; }
+  .bar .cell { order: var(--o); }
+  .bar .cell.first { border-left: 0; }
+  /* enlarged bar: big main row, with batting side / extras / last man / 1st inns in a slim strip
+     sitting on top of it at the left */
+  body.stacked .bar { flex-direction: column; align-items: flex-start; height: auto;
+                      overflow: visible; border-radius: 0; box-shadow: none; }
+  body.stacked .bar-sub, body.stacked .bar-main { display: flex; align-items: stretch; overflow: hidden; }
+  body.stacked .bar-main { height: 64px; border-radius: 10px; box-shadow: 0 8px 28px rgba(0,0,0,.45); }
+  body.stacked .bar-sub { height: 32px; border-radius: 8px 8px 0 0; margin-left: 10px;
+                          box-shadow: 0 -2px 14px rgba(0,0,0,.30); }
+  body.stacked .bar-sub .cell { padding: 0 14px; gap: 8px; background: var(--panel-2); }
+  body.stacked .bar-sub .lbl { font-size: 11px; }
+  body.stacked .bar-sub .val { font-size: 21px; }
+  body.stacked .bar-sub.empty { display: none; }
   .title { background: var(--accent); color: var(--accent-ink); font-weight: 700;
            font-size: 22px; letter-spacing: .04em; text-transform: uppercase; }
   .title:empty { display: none; }
@@ -180,18 +196,24 @@
 </head>
 <body>
   <!-- score bar -->
+  <!-- score bar: one row, or (when enlarged) the main numbers with a slim strip of the rest above.
+       The "o" numbers keep the one-row order. -->
   <div class="bar" id="bar">
-    <div class="cell title" data-text="title"></div>
-    <div class="cell side-cell hidden"><span class="lbl">Batting</span><span class="val" data-side-name></span></div>
-    <div class="cell score">
-      <span class="big num" data-f="total">0</span><span class="sep">-</span><span class="big num" data-f="wickets">0</span>
+    <div class="bar-sub">
+      <div class="cell side-cell hidden" style="--o:2"><span class="lbl">Batting</span><span class="val" data-side-name></span></div>
+      <div class="cell small" data-show="extras" style="--o:7"><span class="lbl">Extras</span><span class="val num" data-f="extras"></span></div>
+      <div class="cell small" data-show="last_bat" style="--o:8"><span class="lbl">Last man</span><span class="val num" data-f="last_bat"></span></div>
+      <div class="cell small" data-show="first_inns" style="--o:9"><span class="lbl">1st inns</span><span class="val num" data-f="first_inns"></span></div>
     </div>
-    <div class="cell"><span class="lbl">Overs</span><span class="val num" data-f="overs">0</span></div>
-    <div class="cell bat" data-bat="lh"><span class="no num" data-f="lh_no"></span><span class="runs num" data-f="lh_runs"></span></div>
-    <div class="cell bat" data-bat="rh"><span class="no num" data-f="rh_no"></span><span class="runs num" data-f="rh_runs"></span></div>
-    <div class="cell small" data-show="extras"><span class="lbl">Extras</span><span class="val num" data-f="extras"></span></div>
-    <div class="cell small" data-show="last_bat"><span class="lbl">Last man</span><span class="val num" data-f="last_bat"></span></div>
-    <div class="cell small" data-show="first_inns"><span class="lbl">1st inns</span><span class="val num" data-f="first_inns"></span></div>
+    <div class="bar-main">
+      <div class="cell title" data-text="title" style="--o:1"></div>
+      <div class="cell score" style="--o:3">
+        <span class="big num" data-f="total">0</span><span class="sep">-</span><span class="big num" data-f="wickets">0</span>
+      </div>
+      <div class="cell" style="--o:4"><span class="lbl">Overs</span><span class="val num" data-f="overs">0</span></div>
+      <div class="cell bat" data-bat="lh" style="--o:5"><span class="no num" data-f="lh_no"></span><span class="runs num" data-f="lh_runs"></span></div>
+      <div class="cell bat" data-bat="rh" style="--o:6"><span class="no num" data-f="rh_no"></span><span class="runs num" data-f="rh_runs"></span></div>
+    </div>
   </div>
 
   <!-- full board -->
@@ -273,11 +295,30 @@
   // Size: the board layouts scale to fit the window (or OBS browser source), keeping their shape,
   // and re-fit whenever it's resized. &scale is then a fraction of the window. The bar keeps
   // &scale as a zoom but shrinks if it would be wider than the window.
-  const userScale = parseFloat(q.get("scale")) > 0 ? parseFloat(q.get("scale")) : 1;
   const fitMode = q.get("fit") !== "0";
   const panelId = { board: "board", classic: "classic", classicboard: "cboard" }[layout];
+  // the bar defaults to twice its drawn size so it reads well over the camera picture
+  const userScale = parseFloat(q.get("scale")) > 0 ? parseFloat(q.get("scale")) : (panelId ? 1 : 2);
+  // an enlarged bar (scale 1.5 or more, so the default) is two-tier so it still fits across
+  // the picture; &stack=0 / &stack=1 forces one row / two tiers
+  const stacked = !panelId && (q.has("stack") ? q.get("stack") !== "0" : userScale >= 1.5);
+  document.body.classList.toggle("stacked", stacked);
+  function tidyBar() {
+    // the first visible cell in each row has no divider; hide the strip when it has nothing in it
+    const rows = stacked ? [".bar-sub", ".bar-main"] : [".bar"];
+    document.querySelectorAll(".bar .cell").forEach(c => c.classList.remove("first"));
+    rows.forEach(r => {
+      const vis = [...document.querySelectorAll(r + " .cell")]
+        .filter(c => getComputedStyle(c).display !== "none")
+        .sort((a, b) => getComputedStyle(a).order - getComputedStyle(b).order);
+      if (vis.length) vis[0].classList.add("first");
+      const row = document.querySelector(r);
+      if (r === ".bar-sub") row.classList.toggle("empty", !vis.length);
+    });
+  }
   function fit() {
     const W = window.innerWidth, H = window.innerHeight;
+    if (!panelId) tidyBar();
     const el = document.getElementById(panelId || "bar");
     if (!el || !W || !H) return;
     const w = el.offsetWidth, h = el.offsetHeight;      // natural size (transforms don't affect these)
