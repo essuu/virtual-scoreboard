@@ -76,7 +76,9 @@
   .bat .no { min-width: 34px; height: 34px; border-radius: 6px; display: grid; place-items: center;
              background: rgba(255,255,255,.10); font-size: 20px; font-weight: 600; }
   .bat .runs { font-size: 30px; font-weight: 600; min-width: 2.2ch; text-align: right; }
-  .bat.empty { display: none; }
+  .bar .val.num { min-width: 1.6ch; text-align: right; }
+  .bar .score .big { min-width: 1.4ch; text-align: right; }
+  .bar .score .big + .sep + .big { text-align: left; }
   .small .val { font-size: 24px; }
   .hidden { display: none !important; }
 
@@ -200,10 +202,10 @@
        The "o" numbers keep the one-row order. -->
   <div class="bar" id="bar">
     <div class="bar-sub">
-      <div class="cell side-cell hidden" style="--o:2"><span class="lbl">Batting</span><span class="val" data-side-name></span></div>
-      <div class="cell small" data-show="extras" style="--o:7"><span class="lbl">Extras</span><span class="val num" data-f="extras"></span></div>
-      <div class="cell small" data-show="last_bat" style="--o:8"><span class="lbl">Last man</span><span class="val num" data-f="last_bat"></span></div>
-      <div class="cell small" data-show="first_inns" style="--o:9"><span class="lbl">1st inns</span><span class="val num" data-f="first_inns"></span></div>
+      <div class="cell side-cell" style="--o:2"><span class="lbl">Batting</span><span class="val" data-side-name></span></div>
+      <div class="cell small" style="--o:7"><span class="lbl">Extras</span><span class="val num" data-f="extras"></span></div>
+      <div class="cell small" style="--o:8"><span class="lbl">Last man</span><span class="val num" data-f="last_bat"></span></div>
+      <div class="cell small" style="--o:9"><span class="lbl">1st inns</span><span class="val num" data-f="first_inns"></span></div>
     </div>
     <div class="bar-main">
       <div class="cell title" data-text="title" style="--o:1"></div>
@@ -211,8 +213,8 @@
         <span class="big num" data-f="total">0</span><span class="sep">-</span><span class="big num" data-f="wickets">0</span>
       </div>
       <div class="cell" style="--o:4"><span class="lbl">Overs</span><span class="val num" data-f="overs">0</span></div>
-      <div class="cell bat" data-bat="lh" style="--o:5"><span class="no num" data-f="lh_no"></span><span class="runs num" data-f="lh_runs"></span></div>
-      <div class="cell bat" data-bat="rh" style="--o:6"><span class="no num" data-f="rh_no"></span><span class="runs num" data-f="rh_runs"></span></div>
+      <div class="cell bat" style="--o:5"><span class="no num" data-f="lh_no"></span><span class="runs num" data-f="lh_runs"></span></div>
+      <div class="cell bat" style="--o:6"><span class="no num" data-f="rh_no"></span><span class="runs num" data-f="rh_runs"></span></div>
     </div>
   </div>
 
@@ -346,10 +348,15 @@
   let last = {};
 
   const sideNames = { home: q.get("home") || "Home", away: q.get("away") || "Away" };
+  // the bar's batting cell keeps the width of the longer name, so it doesn't jump when it's set
+  document.querySelectorAll(".bar [data-side-name]").forEach(el =>
+    el.style.minWidth = (Math.max(sideNames.home.length, sideNames.away.length) * 0.75) + "em");
   function renderSide(match) {
     const side = (match && match.batting) || "";
     document.querySelectorAll("[data-side-name]").forEach(el => el.textContent = side ? sideNames[side] : "");
-    document.querySelectorAll(".side, .side-cell, [data-side-show]").forEach(el => el.classList.toggle("hidden", !side));
+    document.querySelectorAll(".side, [data-side-show]").forEach(el => el.classList.toggle("hidden", !side));
+    // the bar always shows its batting cell, with a dash until the side is set
+    document.querySelectorAll(".bar [data-side-name]").forEach(el => { if (!side) el.textContent = "–"; });
     fit();
   }
 
@@ -359,16 +366,11 @@
       let v = (values[f] || "").trim();
       // a batter who is in but hasn't scored shows 0
       const batIn = (f === "lh_runs" || f === "rh_runs") && (values[f.slice(0, 2) + "_no"] || "").trim();
-      if (!v) v = (zeroIfBlank.has(f) || batIn) ? "0" : ((layout === "board" || layout === "classicboard") ? "–" : "");
+      if (!v) v = (zeroIfBlank.has(f) || batIn) ? "0" : (layout !== "classic" ? "–" : "");
       if (el.textContent !== v) {
         el.textContent = v;
         if (f in last) { el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash"); }
       }
-    });
-    // bar: hide a batter cell with no batter number, hide optional cells when blank
-    document.querySelectorAll("[data-bat]").forEach(el => {
-      const side = el.dataset.bat;
-      el.classList.toggle("empty", !(values[side + "_no"] || "").trim());
     });
     // umpire light: field 0 is 1 while the key is held, 0 when released; no animation, it's real time
     const lit = !!(values.umpire_light || "").trim() && values.umpire_light.trim() !== "0";
